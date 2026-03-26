@@ -1,0 +1,66 @@
+<aside class="sidebar" [class.collapsed]="isCollapsedState()">
+  <div class="sidebar-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fas fa-users-cog"></i>
+      </div>
+      @if (!isCollapsedState()) {
+        <div class="brand-text">
+          <h1>HRM</h1>
+          <span>System</span>
+        </div>
+      }
+    </div>
+    <button class="btn-toggle" (click)="toggleCollapse()">
+      <i class="fas" [class.fa-bars]="isCollapsedState()" [class.fa-times]="!isCollapsedState()"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    @for (item of menuItems; track item.route) {
+      @if (!item.roles || hasAccess(item.roles)) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }">
+          <i class="fas" [class]="item.icon"></i>
+          @if (!isCollapsedState()) {
+            <span>{{ item.label }}</span>
+          }
+        </a>
+      }
+    }
+  </nav>
+
+  <div class="sidebar-footer">
+    <app-dropdown [alignRight]="true">
+      <div dropdown-trigger class="user-profile">
+        <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
+        @if (!isCollapsedState()) {
+          <div class="user-info">
+            <span class="user-name">{{ currentUser()?.username }}</span>
+            <span class="user-role">{{ currentUser()?.role?.name || 'User' }}</span>
+          </div>
+          <i class="fas fa-chevron-down"></i>
+        }
+      </div>
+
+      <div class="dropdown-menu-content">
+        <a class="dropdown-item" (click)="editProfile()">
+          <i class="fas fa-user-edit"></i>
+          <span>Edit Profile</span>
+        </a>
+        <a class="dropdown-item" (click)="changePassword()">
+          <i class="fas fa-key"></i>
+          <span>Change Password</span>
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item logout" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </app-dropdown>
+  </div>
+</aside>

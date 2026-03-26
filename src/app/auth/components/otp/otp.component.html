@@ -1,0 +1,57 @@
+<div class="otp-container">
+  <div class="otp-card">
+    <div class="otp-header">
+      <div class="otp-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <h1>Two-Factor Authentication</h1>
+      <p>Enter the 6-digit code sent to</p>
+      <strong class="email-display">{{ email() }}</strong>
+    </div>
+
+    <div class="otp-form">
+      <div class="otp-inputs" (paste)="onPaste($event)">
+        @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+          <input
+            #otpInput
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+            class="otp-input"
+            [class.correct]="otpStatus()[i] === 'correct'"
+            [class.wrong]="otpStatus()[i] === 'wrong'"
+            (input)="onOtpInput(i, $event)"
+            (keydown)="onKeyDown(i, $event)"
+            autocomplete="off">
+        }
+      </div>
+
+      <div class="otp-status">
+        @if (isLoading()) {
+          <div class="status-message loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Verifying...
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-resend"
+        [disabled]="resendCooldown() > 0 || isLoading()"
+        (click)="resendOtp()">
+        @if (resendCooldown() > 0) {
+          Resend OTP in {{ resendCooldown() }}s
+        } @else {
+          Resend OTP
+        }
+      </button>
+    </div>
+
+    <div class="otp-footer">
+      <button class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Back to Login
+      </button>
+    </div>
+  </div>
+</div>

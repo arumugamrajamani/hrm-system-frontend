@@ -1,0 +1,27 @@
+<header class="header">
+  <div class="header-left">
+    <button class="btn-toggle-sidebar" (click)="onToggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="page-title">
+      <h1>{{ pageTitle }}</h1>
+      <span class="breadcrumb">HRM System</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="header-date">
+      <i class="fas fa-calendar-alt"></i>
+      <span>{{ formattedDate }}</span>
+    </div>
+
+    <button class="btn-icon" title="Notifications">
+      <i class="fas fa-bell"></i>
+      <span class="badge">3</span>
+    </button>
+
+    <button class="btn-icon" title="Help">
+      <i class="fas fa-question-circle"></i>
+    </button>
+  </div>
+</header>

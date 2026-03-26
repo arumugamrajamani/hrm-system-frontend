@@ -1,0 +1,139 @@
+<div class="user-list-container">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>User Management</h1>
+      <p>Manage system users and their permissions</p>
+    </div>
+    <button class="btn btn-primary" (click)="addUser()">
+      <i class="fas fa-plus"></i> Add User
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          placeholder="Search users..."
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()">
+        <button class="btn-search" (click)="onSearch()">Search</button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Loading users...</span>
+        </div>
+      } @else if (users().length === 0) {
+        <div class="empty-state">
+          <i class="fas fa-users"></i>
+          <h3>No users found</h3>
+          <p>Get started by adding your first user</p>
+          <button class="btn btn-primary" (click)="addUser()">
+            <i class="fas fa-plus"></i> Add User
+          </button>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th (click)="onSort('username')" class="sortable">
+                  User <i class="fas" [class]="getSortIcon('username')"></i>
+                </th>
+                <th (click)="onSort('email')" class="sortable">
+                  Email <i class="fas" [class]="getSortIcon('email')"></i>
+                </th>
+                <th>Mobile</th>
+                <th (click)="onSort('role')" class="sortable">
+                  Role <i class="fas" [class]="getSortIcon('role')"></i>
+                </th>
+                <th (click)="onSort('status')" class="sortable">
+                  Status <i class="fas" [class]="getSortIcon('status')"></i>
+                </th>
+                <th (click)="onSort('createdAt')" class="sortable">
+                  Created <i class="fas" [class]="getSortIcon('createdAt')"></i>
+                </th>
+                <th class="actions-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr>
+                  <td>
+                    <div class="user-info">
+                      <app-avatar [name]="user.username" [size]="40"></app-avatar>
+                      <div class="user-details">
+                        <span class="user-name">{{ user.username }}</span>
+                        @if (user.firstName || user.lastName) {
+                          <span class="user-fullname">{{ user.firstName }} {{ user.lastName }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.mobile }}</td>
+                  <td>
+                    <span class="role-badge">{{ user.role ? user.role.name : 'User' }}</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" [class]="getStatusClass(user.status || 'active')">
+                      {{ user.status || 'active' }}
+                    </span>
+                  </td>
+                  <td>{{ formatDate(user.createdAt) }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-edit" (click)="editUser(user)" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteUser(user)" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-container">
+          <div class="pagination-info">
+            Showing {{ (pagination().page - 1) * pagination().limit + 1 }} to 
+            {{ pagination().page * pagination().limit }} of {{ pagination().total }} entries
+          </div>
+          
+          <div class="pagination">
+            <button
+              class="page-btn"
+              [disabled]="pagination().page === 1"
+              (click)="changePage(pagination().page - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+
+            @for (page of displayedPages(); track page) {
+              <button
+                class="page-btn"
+                [class.active]="pagination().page === page"
+                (click)="changePage(page)">
+                {{ page }}
+              </button>
+            }
+
+            <button
+              class="page-btn"
+              [disabled]="pagination().page === pagination().totalPages"
+              (click)="changePage(pagination().page + 1)">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
