@@ -19,7 +19,7 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.authService.getToken();
+    const token = localStorage.getItem('hrm_token');
     console.log('Interceptor - Token:', token ? 'Token exists' : 'No token');
     console.log('Interceptor - URL:', req.url);
 

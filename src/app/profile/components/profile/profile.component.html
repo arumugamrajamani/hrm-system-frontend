@@ -1,0 +1,166 @@
+<div class="profile-page">
+  <div class="page-header">
+    <button class="btn-back" (click)="cancel()">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
+    </button>
+    <div class="header-content">
+      <h1>Edit Profile</h1>
+      <p>Update your personal information</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Loading...</span>
+    </div>
+  } @else {
+    <div class="form-card">
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <div class="section-header">
+            <i class="fas fa-user"></i>
+            <h3>Profile Photo</h3>
+          </div>
+          <div class="profile-photo-section">
+            <div class="photo-preview">
+              @if (profilePhotoPreview()) {
+                <img [src]="profilePhotoPreview()" alt="Profile Photo" />
+                <button type="button" class="btn-remove-photo" (click)="removeProfilePhoto()">
+                  <i class="fas fa-times"></i>
+                </button>
+              } @else {
+                <div class="photo-placeholder">
+                  <i class="fas fa-user"></i>
+                </div>
+              }
+            </div>
+            <div class="photo-upload">
+              <label for="profile_photo" class="btn-upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Upload Photo
+              </label>
+              <input
+                type="file"
+                id="profile_photo"
+                accept="image/*"
+                (change)="onFileSelect($event)"
+                style="display: none"
+              />
+              <span class="photo-hint">JPG, PNG. Max 2MB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <i class="fas fa-id-card"></i>
+            <h3>Personal Information</h3>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input
+                  type="text"
+                  id="username"
+                  formControlName="username"
+                  placeholder="Username"
+                  [disabled]="true"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input
+                  type="email"
+                  id="email"
+                  formControlName="email"
+                  placeholder="Enter email address"
+                  [class.error]="f['email'].invalid && f['email'].touched"
+                />
+              </div>
+              @if (f['email'].invalid && f['email'].touched) {
+                <div class="field-error">
+                  @if (f['email'].errors?.['required']) {
+                    Email is required
+                  }
+                  @if (f['email'].errors?.['email']) {
+                    Invalid email format
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="mobile">Mobile Number</label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
+                <input
+                  type="tel"
+                  id="mobile"
+                  formControlName="mobile"
+                  placeholder="Enter mobile number"
+                  [class.error]="f['mobile'].invalid && f['mobile'].touched"
+                />
+              </div>
+              @if (f['mobile'].invalid && f['mobile'].touched) {
+                <div class="field-error">
+                  @if (f['mobile'].errors?.['required']) {
+                    Mobile is required
+                  }
+                  @if (f['mobile'].errors?.['invalidMobile']) {
+                    Invalid mobile number
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="role_id">Role</label>
+              <div class="input-wrapper">
+                <i class="fas fa-user-shield"></i>
+                <input
+                  type="text"
+                  id="role_id"
+                  [value]="getRoleName(f['role_id'].value)"
+                  disabled
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status</label>
+              <div class="input-wrapper">
+                <i class="fas fa-toggle-on"></i>
+                <input type="text" id="status" formControlName="status" [disabled]="true" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancel()">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+          <button type="submit" class="btn-submit" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <i class="fas fa-spinner fa-spin"></i>
+              Saving...
+            } @else {
+              <i class="fas fa-check"></i>
+              Save Changes
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>
