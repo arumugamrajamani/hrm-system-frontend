@@ -1,8 +1,10 @@
 <div class="dashboard-container">
   <app-sidebar
     [isCollapsed]="isSidebarCollapsed()"
+    [isMobileOpen]="isMobileMenuOpen()"
     (collapsedChange)="onSidebarToggle($event)"
-    [class.mobile-open]="isMobileMenuOpen()">
+    (menuClicked)="closeMobileMenu()"
+  >
   </app-sidebar>
 
   @if (isMobileMenuOpen()) {
@@ -10,10 +12,7 @@
   }
 
   <div class="main-wrapper" [class.sidebar-collapsed]="isSidebarCollapsed()">
-    <app-header
-      [pageTitle]="pageTitle()"
-      (toggleSidebar)="onMobileMenuToggle()">
-    </app-header>
+    <app-header [pageTitle]="pageTitle()" (toggleSidebar)="onMobileMenuToggle()"> </app-header>
 
     <main class="main-content">
       <router-outlet></router-outlet>

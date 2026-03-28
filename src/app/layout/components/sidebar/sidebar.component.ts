@@ -3,7 +3,6 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
-import { DropdownComponent } from '../../../shared/components/dropdown/dropdown.component';
 
 interface MenuItem {
   label: string;
@@ -20,13 +19,16 @@ interface MenuItem {
 })
 export class SidebarComponent implements OnInit {
   @Input() isCollapsed = false;
+  @Input() isMobileOpen = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
+  @Output() menuClicked = new EventEmitter<void>();
 
   private authService = inject(AuthService);
   private router = inject(Router);
 
   currentUser = this.authService.currentUser;
   isCollapsedState = signal(false);
+  isUserMenuOpen = signal(false);
 
   menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'fa-th-large', route: '/dashboard' },
@@ -44,6 +46,14 @@ export class SidebarComponent implements OnInit {
     this.collapsedChange.emit(this.isCollapsedState());
   }
 
+  toggleUserMenu(): void {
+    this.isUserMenuOpen.update((v) => !v);
+  }
+
+  onMenuClick(): void {
+    this.menuClicked.emit();
+  }
+
   isActive(route: string): boolean {
     return this.router.url.startsWith(route);
   }
@@ -54,14 +64,17 @@ export class SidebarComponent implements OnInit {
   }
 
   editProfile(): void {
+    this.isUserMenuOpen.set(false);
     this.router.navigate(['/profile']);
   }
 
   changePassword(): void {
+    this.isUserMenuOpen.set(false);
     this.router.navigate(['/auth/reset-password']);
   }
 
   logout(): void {
+    this.isUserMenuOpen.set(false);
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }

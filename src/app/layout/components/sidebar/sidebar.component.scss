@@ -8,7 +8,9 @@
   left: 0;
   top: 0;
   z-index: 100;
-  transition: width 0.3s ease;
+  transition:
+    width 0.3s ease,
+    transform 0.3s ease;
   border-right: 1px solid #334155;
 
   &.collapsed {
@@ -203,6 +205,7 @@
 .sidebar-footer {
   padding: 20px;
   border-top: 1px solid #334155;
+  position: relative;
 
   .user-profile {
     display: flex;
@@ -245,10 +248,21 @@
       }
     }
 
-    .fa-chevron-down {
+    .fa-chevron-down,
+    .fa-chevron-up {
       color: #64748b;
       font-size: 12px;
     }
+  }
+
+  .dropdown-menu-content {
+    position: absolute;
+    bottom: 100%;
+    left: 10px;
+    right: 10px;
+    margin-bottom: 8px;
+    min-width: auto;
+    z-index: 1000;
   }
 }
 
@@ -306,69 +320,44 @@
   }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
-
-    &.collapsed {
-      transform: translateX(0);
-      width: 260px;
-
-      .sidebar-header {
-        padding: 20px;
-
-        .brand {
-          justify-content: flex-start;
-        }
-
-        .brand-text {
-          display: block;
-        }
-      }
-
-      .btn-toggle {
-        position: static;
-        background: none;
-        width: auto;
-        height: auto;
-        border-radius: 0;
-        box-shadow: none;
-        display: block;
-      }
-
-      .nav-item {
-        justify-content: flex-start;
-        padding: 14px 16px;
-        margin: 4px 12px;
-        border-radius: 12px;
-
-        i {
-          margin-right: 12px;
-          font-size: 18px;
-        }
-
-        span {
-          display: block;
-        }
-      }
-
-      .sidebar-footer {
-        padding: 16px;
-
-        .user-profile {
-          justify-content: flex-start;
-          padding: 10px;
-
-          .user-info,
-          .fa-chevron-down {
-            display: block;
-          }
-        }
-      }
-    }
 
     &.mobile-open {
       transform: translateX(0);
     }
+  }
+
+  .sidebar-footer {
+    display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar-footer {
+    display: block !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .sidebar {
+    transform: translateX(-100%);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar-footer {
+    display: block !important;
   }
 }

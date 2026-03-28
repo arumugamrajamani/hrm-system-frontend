@@ -1,4 +1,4 @@
-<aside class="sidebar" [class.collapsed]="isCollapsedState()">
+<aside class="sidebar" [class.collapsed]="isCollapsedState()" [class.mobile-open]="isMobileOpen">
   <div class="sidebar-header">
     <div class="brand">
       <div class="brand-icon">
@@ -28,6 +28,7 @@
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+          (click)="onMenuClick()"
         >
           <i class="fas" [class]="item.icon"></i>
           @if (!isCollapsedState()) {
@@ -39,37 +40,41 @@
   </nav>
 
   <div class="sidebar-footer">
-    <app-dropdown [alignRight]="true">
-      <div dropdown-trigger class="user-profile">
-        @if (currentUser()?.profile_photo) {
-          <img [src]="currentUser()?.profile_photo" alt="Profile" class="user-avatar-img" />
-        } @else {
-          <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
-        }
-        @if (!isCollapsedState()) {
-          <div class="user-info">
-            <span class="user-name">{{ currentUser()?.username }}</span>
-            <span class="user-role">{{ currentUser()?.role?.name || 'User' }}</span>
-          </div>
-          <i class="fas fa-chevron-down"></i>
-        }
-      </div>
+    <div class="user-profile" (click)="toggleUserMenu()">
+      @if (currentUser()?.profile_photo) {
+        <img [src]="currentUser()?.profile_photo" alt="Profile" class="user-avatar-img" />
+      } @else {
+        <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
+      }
+      @if (!isCollapsedState()) {
+        <div class="user-info">
+          <span class="user-name">{{ currentUser()?.username }}</span>
+          <span class="user-role">{{ currentUser()?.role || 'User' }}</span>
+        </div>
+        <i
+          class="fas"
+          [class.fa-chevron-down]="!isUserMenuOpen()"
+          [class.fa-chevron-up]="isUserMenuOpen()"
+        ></i>
+      }
+    </div>
 
+    @if (isUserMenuOpen()) {
       <div class="dropdown-menu-content">
-        <a class="dropdown-item" (click)="editProfile()">
+        <a class="dropdown-item" (click)="editProfile(); $event.stopPropagation()">
           <i class="fas fa-user-edit"></i>
           <span>Edit Profile</span>
         </a>
-        <a class="dropdown-item" (click)="changePassword()">
+        <a class="dropdown-item" (click)="changePassword(); $event.stopPropagation()">
           <i class="fas fa-key"></i>
           <span>Change Password</span>
         </a>
         <div class="dropdown-divider"></div>
-        <a class="dropdown-item logout" (click)="logout()">
+        <a class="dropdown-item logout" (click)="logout(); $event.stopPropagation()">
           <i class="fas fa-sign-out-alt"></i>
           <span>Logout</span>
         </a>
       </div>
-    </app-dropdown>
+    }
   </div>
 </aside>
