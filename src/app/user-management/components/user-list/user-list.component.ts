@@ -22,6 +22,7 @@ export class UserListComponent implements OnInit {
   users = signal<User[]>([]);
   isLoading = signal(false);
   searchTerm = signal('');
+  searchType = 'all';
 
   pagination = signal({
     page: 1,
@@ -66,13 +67,18 @@ export class UserListComponent implements OnInit {
   loadUsers(): void {
     this.isLoading.set(true);
 
+    let searchValue = this.searchTerm();
+    if (this.searchType !== 'all' && searchValue) {
+      searchValue = `${this.searchType}:${searchValue}`;
+    }
+
     this.userApi
       .getUsers({
         page: this.pagination().page,
         limit: this.pagination().limit,
         sortBy: this.sortField(),
         sortOrder: this.sortOrder(),
-        search: this.searchTerm(),
+        search: searchValue || undefined,
       })
       .subscribe({
         next: (response) => {
