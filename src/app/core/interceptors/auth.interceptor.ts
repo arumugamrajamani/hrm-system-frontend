@@ -4,7 +4,7 @@ import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
-  HttpErrorResponse
+  HttpErrorResponse,
 } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -15,24 +15,29 @@ import { AuthService, ToasterService } from '../services';
 export class AuthInterceptor implements HttpInterceptor {
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
+    console.log('Interceptor - Token:', token ? 'Token exists' : 'No token');
+    console.log('Interceptor - URL:', req.url);
 
     if (token) {
       req = req.clone({
         setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
+      console.log('Interceptor - Added Bearer token');
+    } else {
+      console.log('Interceptor - No token added, request will be unauthenticated');
     }
 
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         return this.handleError(error);
-      })
+      }),
     );
   }
 

@@ -1,11 +1,14 @@
-<div class="user-form-container">
+<div class="user-form-page">
   <div class="page-header">
     <button class="btn-back" (click)="cancel()">
-      <i class="fas fa-arrow-left"></i> Back
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
     </button>
-    <div class="header-title">
+    <div class="header-content">
       <h1>{{ isEditMode() ? 'Edit User' : 'Add New User' }}</h1>
-      <p>{{ isEditMode() ? 'Update user information' : 'Create a new user account' }}</p>
+      <p>
+        {{ isEditMode() ? 'Update user information and permissions' : 'Create a new user account' }}
+      </p>
     </div>
   </div>
 
@@ -15,93 +18,134 @@
       <span>Loading...</span>
     </div>
   } @else {
-    <div class="card">
-      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
+    <div class="form-card">
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
         <div class="form-section">
-          <h3>Basic Information</h3>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="username" class="form-label">Username <span class="required">*</span></label>
+          <div class="section-header">
+            <i class="fas fa-user"></i>
+            <h3>Profile Photo</h3>
+          </div>
+          <div class="profile-photo-section">
+            <div class="photo-preview">
+              @if (profilePhotoPreview()) {
+                <img [src]="profilePhotoPreview()" alt="Profile Photo" />
+                <button type="button" class="btn-remove-photo" (click)="removeProfilePhoto()">
+                  <i class="fas fa-times"></i>
+                </button>
+              } @else {
+                <div class="photo-placeholder">
+                  <i class="fas fa-user"></i>
+                </div>
+              }
+            </div>
+            <div class="photo-upload">
+              <label for="profile_photo" class="btn-upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Upload Photo
+              </label>
+              <input
+                type="file"
+                id="profile_photo"
+                accept="image/*"
+                (change)="onFileSelect($event)"
+                style="display: none"
+              />
+              <span class="photo-hint">JPG, PNG. Max 2MB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <i class="fas fa-id-card"></i>
+            <h3>Account Information</h3>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="username">Username <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-user"></i>
                 <input
                   type="text"
                   id="username"
                   formControlName="username"
-                  class="form-control"
-                  [class.is-invalid]="f['username'].invalid && f['username'].touched"
-                  placeholder="Enter username">
-                @if (f['username'].invalid && f['username'].touched) {
-                  <div class="error-message">
-                    @if (f['username'].errors?.['required']) {
-                      <span>Username is required</span>
-                    }
-                    @if (f['username'].errors?.['minlength']) {
-                      <span>Min 3 characters</span>
-                    }
-                    @if (f['username'].errors?.['maxlength']) {
-                      <span>Max 30 characters</span>
-                    }
-                  </div>
-                }
+                  placeholder="Enter username"
+                  [class.error]="f['username'].invalid && f['username'].touched"
+                />
               </div>
+              @if (f['username'].invalid && f['username'].touched) {
+                <div class="field-error">
+                  @if (f['username'].errors?.['required']) {
+                    Username is required
+                  }
+                  @if (f['username'].errors?.['minlength']) {
+                    Min 3 characters
+                  }
+                  @if (f['username'].errors?.['maxlength']) {
+                    Max 30 characters
+                  }
+                </div>
+              }
             </div>
 
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+            <div class="form-group">
+              <label for="email">Email Address <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
                 <input
                   type="email"
                   id="email"
                   formControlName="email"
-                  class="form-control"
-                  [class.is-invalid]="f['email'].invalid && f['email'].touched"
-                  placeholder="Enter email address">
-                @if (f['email'].invalid && f['email'].touched) {
-                  <div class="error-message">
-                    @if (f['email'].errors?.['required']) {
-                      <span>Email is required</span>
-                    }
-                    @if (f['email'].errors?.['email']) {
-                      <span>Invalid email format</span>
-                    }
-                  </div>
-                }
+                  placeholder="Enter email address"
+                  [class.error]="f['email'].invalid && f['email'].touched"
+                />
               </div>
+              @if (f['email'].invalid && f['email'].touched) {
+                <div class="field-error">
+                  @if (f['email'].errors?.['required']) {
+                    Email is required
+                  }
+                  @if (f['email'].errors?.['email']) {
+                    Invalid email format
+                  }
+                </div>
+              }
             </div>
-          </div>
 
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="mobile" class="form-label">Mobile Number <span class="required">*</span></label>
+            <div class="form-group">
+              <label for="mobile">Mobile Number <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
                 <input
                   type="tel"
                   id="mobile"
                   formControlName="mobile"
-                  class="form-control"
-                  [class.is-invalid]="f['mobile'].invalid && f['mobile'].touched"
-                  placeholder="Enter mobile number">
-                @if (f['mobile'].invalid && f['mobile'].touched) {
-                  <div class="error-message">
-                    @if (f['mobile'].errors?.['required']) {
-                      <span>Mobile is required</span>
-                    }
-                    @if (f['mobile'].errors?.['invalidMobile']) {
-                      <span>Invalid mobile number (10-15 digits)</span>
-                    }
-                  </div>
-                }
+                  placeholder="Enter mobile number"
+                  [class.error]="f['mobile'].invalid && f['mobile'].touched"
+                />
               </div>
+              @if (f['mobile'].invalid && f['mobile'].touched) {
+                <div class="field-error">
+                  @if (f['mobile'].errors?.['required']) {
+                    Mobile is required
+                  }
+                  @if (f['mobile'].errors?.['invalidMobile']) {
+                    Invalid mobile number
+                  }
+                </div>
+              }
             </div>
 
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="status" class="form-label">Status <span class="required">*</span></label>
+            <div class="form-group">
+              <label for="status">Status <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-toggle-on"></i>
                 <select
                   id="status"
                   formControlName="status"
-                  class="form-control"
-                  [class.is-invalid]="f['status'].invalid && f['status'].touched">
+                  [class.error]="f['status'].invalid && f['status'].touched"
+                >
                   @for (status of statuses; track status) {
                     <option [value]="status">{{ status | titlecase }}</option>
                   }
@@ -112,153 +156,143 @@
         </div>
 
         <div class="form-section">
-          <h3>Personal Details</h3>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="firstName" class="form-label">First Name</label>
-                <input
-                  type="text"
-                  id="firstName"
-                  formControlName="firstName"
-                  class="form-control"
-                  placeholder="Enter first name">
-              </div>
-            </div>
+          <div class="section-header">
+            <i class="fas fa-user-shield"></i>
+            <h3>Role & Permissions</h3>
+          </div>
 
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="lastName" class="form-label">Last Name</label>
-                <input
-                  type="text"
-                  id="lastName"
-                  formControlName="lastName"
-                  class="form-control"
-                  placeholder="Enter last name">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="role_id">Role <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-users-cog"></i>
+                <select
+                  id="role_id"
+                  formControlName="role_id"
+                  [class.error]="f['role_id'].invalid && f['role_id'].touched"
+                >
+                  <option value="">Select role</option>
+                  @for (role of roles; track role.id) {
+                    <option [value]="role.id">{{ role.name }}</option>
+                  }
+                </select>
               </div>
+              @if (f['role_id'].invalid && f['role_id'].touched) {
+                <div class="field-error">Role is required</div>
+              }
             </div>
           </div>
         </div>
 
         @if (!isEditMode()) {
           <div class="form-section">
-            <h3>Security</h3>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="password" class="form-label">Password <span class="required">*</span></label>
-                  <div class="input-group">
-                    <input
-                      [type]="showPassword() ? 'text' : 'password'"
-                      id="password"
-                      formControlName="password"
-                      class="form-control"
-                      [class.is-invalid]="f['password'].invalid && f['password'].touched"
-                      placeholder="Enter password">
-                    <button
-                      type="button"
-                      class="btn-toggle"
-                      (click)="togglePassword()">
-                      <i class="fas" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
-                    </button>
-                  </div>
-                  @if (f['password'].invalid && f['password'].touched) {
-                    <div class="error-message">
-                      @if (f['password'].errors?.['required']) {
-                        <span>Password is required</span>
-                      }
-                      @if (f['password'].errors?.['minlength']) {
-                        <span>Min 8 characters</span>
-                      }
-                      @if (f['password'].errors?.['uppercase']) {
-                        <span>1 uppercase</span>
-                      }
-                      @if (f['password'].errors?.['number']) {
-                        <span>1 number</span>
-                      }
-                      @if (f['password'].errors?.['specialChar']) {
-                        <span>1 special</span>
-                      }
-                    </div>
-                  }
+            <div class="section-header">
+              <i class="fas fa-lock"></i>
+              <h3>Security</h3>
+            </div>
 
-                  @if (f['password'].value) {
-                    <div class="password-strength">
-                      <div class="strength-bar">
-                        <div
-                          class="strength-fill"
-                          [style.width.%]="passwordStrength.score"
-                          [style.backgroundColor]="passwordStrength.color">
-                        </div>
-                      </div>
-                      <span class="strength-text" [style.color]="passwordStrength.color">
-                        {{ passwordStrength.message }}
-                      </span>
-                    </div>
-                  }
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fas fa-lock"></i>
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    id="password"
+                    formControlName="password"
+                    placeholder="Enter password"
+                    [class.error]="f['password'].invalid && f['password'].touched"
+                  />
+                  <button type="button" class="toggle-password" (click)="togglePassword()">
+                    <i
+                      class="fas"
+                      [class.fa-eye]="!showPassword()"
+                      [class.fa-eye-slash]="showPassword()"
+                    ></i>
+                  </button>
                 </div>
+                @if (f['password'].invalid && f['password'].touched) {
+                  <div class="field-error">
+                    @if (f['password'].errors?.['required']) {
+                      Password is required
+                    }
+                    @if (f['password'].errors?.['minlength']) {
+                      Min 8 characters
+                    }
+                    @if (f['password'].errors?.['uppercase']) {
+                      1 uppercase letter
+                    }
+                    @if (f['password'].errors?.['number']) {
+                      1 number
+                    }
+                    @if (f['password'].errors?.['specialChar']) {
+                      1 special character
+                    }
+                  </div>
+                }
+
+                @if (f['password'].value) {
+                  <div class="password-strength">
+                    <div class="strength-bar">
+                      <div
+                        class="strength-fill"
+                        [style.width.%]="passwordStrength.score"
+                        [style.backgroundColor]="passwordStrength.color"
+                      ></div>
+                    </div>
+                    <span class="strength-text" [style.color]="passwordStrength.color">
+                      {{ passwordStrength.message }}
+                    </span>
+                  </div>
+                }
               </div>
 
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="confirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
+              <div class="form-group">
+                <label for="confirmPassword"
+                  >Confirm Password <span class="required">*</span></label
+                >
+                <div class="input-wrapper">
+                  <i class="fas fa-lock"></i>
                   <input
                     [type]="showPassword() ? 'text' : 'password'"
                     id="confirmPassword"
                     formControlName="confirmPassword"
-                    class="form-control"
-                    [class.is-invalid]="(f['confirmPassword'].invalid || userForm.errors?.['passwordMismatch']) && f['confirmPassword'].touched"
-                    placeholder="Confirm password">
-                  @if ((f['confirmPassword'].invalid || userForm.errors?.['passwordMismatch']) && f['confirmPassword'].touched) {
-                    <div class="error-message">
-                      @if (f['confirmPassword'].errors?.['required']) {
-                        <span>Confirm password is required</span>
-                      }
-                      @if (userForm.errors?.['passwordMismatch']) {
-                        <span>Passwords do not match</span>
-                      }
-                    </div>
-                  }
+                    placeholder="Confirm password"
+                    [class.error]="
+                      (f['confirmPassword'].invalid || userForm.errors?.['passwordMismatch']) &&
+                      f['confirmPassword'].touched
+                    "
+                  />
                 </div>
-              </div>
-            </div>
-          </div>
-        }
-
-        <div class="form-section">
-          <h3>Role & Permissions</h3>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="roleId" class="form-label">Role <span class="required">*</span></label>
-                <select
-                  id="roleId"
-                  formControlName="roleId"
-                  class="form-control"
-                  [class.is-invalid]="f['roleId'].invalid && f['roleId'].touched">
-                  <option value="">Select role</option>
-                  @for (role of roles; track role.id) {
-                    <option [value]="role.id">{{ role.name }}</option>
-                  }
-                </select>
-                @if (f['roleId'].invalid && f['roleId'].touched) {
-                  <div class="error-message">
-                    <span>Role is required</span>
+                @if (
+                  (f['confirmPassword'].invalid || userForm.errors?.['passwordMismatch']) &&
+                  f['confirmPassword'].touched
+                ) {
+                  <div class="field-error">
+                    @if (f['confirmPassword'].errors?.['required']) {
+                      Confirm password is required
+                    }
+                    @if (userForm.errors?.['passwordMismatch']) {
+                      Passwords do not match
+                    }
                   </div>
                 }
               </div>
             </div>
           </div>
-        </div>
+        }
 
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="cancel()">
+          <button type="button" class="btn-cancel" (click)="cancel()">
+            <i class="fas fa-times"></i>
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
+          <button type="submit" class="btn-submit" [disabled]="isLoading()">
             @if (isLoading()) {
-              <i class="fas fa-spinner fa-spin"></i> Saving...
+              <i class="fas fa-spinner fa-spin"></i>
+              Saving...
             } @else {
+              <i class="fas fa-check"></i>
               {{ isEditMode() ? 'Update User' : 'Create User' }}
             }
           </button>

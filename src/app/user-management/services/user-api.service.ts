@@ -5,10 +5,10 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse, User, PaginationParams, PaginatedResponse } from '../../core/models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserApiService {
-  private readonly apiUrl = `${environment.apiUrl}/users`;
+  private readonly apiUrl = environment.usersApiUrl;
 
   constructor(private http: HttpClient) {}
 

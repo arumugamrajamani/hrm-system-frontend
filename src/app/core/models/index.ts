@@ -4,11 +4,15 @@ export interface User {
   email: string;
   mobile: string;
   password?: string;
-  role: UserRole;
+  role_id?: number;
+  role?: UserRole;
+  role_name?: string;
+  permissions?: string[];
+  status?: 'active' | 'inactive' | 'pending';
+  profile_photo?: string;
   firstName?: string;
   lastName?: string;
   avatar?: string;
-  status?: 'active' | 'inactive' | 'pending';
   createdAt?: Date;
   updatedAt?: Date;
 }

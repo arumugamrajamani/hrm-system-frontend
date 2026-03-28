@@ -8,7 +8,7 @@ import { AuthService, ToasterService, ModalService } from '../../../core/service
   selector: 'app-login',
   standalone: false,
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
@@ -27,7 +27,7 @@ export class LoginComponent {
   constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
 
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
@@ -38,7 +38,7 @@ export class LoginComponent {
   }
 
   togglePassword(): void {
-    this.showPassword.update(v => !v);
+    this.showPassword.update((v) => !v);
   }
 
   onSubmit(): void {
@@ -52,22 +52,39 @@ export class LoginComponent {
     const { email, password } = this.loginForm.value;
 
     this.authApi.login(email, password).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.isLoading.set(false);
-        if (response.success) {
-          const { user, token } = response.data;
+        console.log('Login Response:', response);
+
+        let user = null;
+        let token = null;
+
+        if (response?.data) {
+          user = response.data.user || response.data;
+          token = response.data.accessToken || response.data.token;
+        } else if (response?.accessToken) {
+          user = response.user || response;
+          token = response.accessToken;
+        }
+
+        if (user && token) {
           this.authService.login(token, user);
-          this.toaster.success('Login Successful', `Welcome back, ${user.firstName || user.username}!`);
+          this.toaster.success(
+            'Login Successful',
+            `Welcome back, ${user.firstName || user.username}!`,
+          );
           this.router.navigateByUrl(this.returnUrl);
         } else {
-          this.modalService.showError('Login Failed', response.message);
+          console.error('No token or user in response:', response);
+          this.modalService.showError('Login Failed', 'Invalid response from server');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.isLoading.set(false);
+        console.log('Login Error:', error);
         const message = error.error?.message || 'An unexpected error occurred';
         this.modalService.showError('Login Failed', message);
-      }
+      },
     });
   }
 }

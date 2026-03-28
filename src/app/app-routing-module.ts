@@ -9,35 +9,37 @@ const routes: Routes = [
     component: DashboardLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { 
-        path: 'dashboard', 
-        loadChildren: () => import('./dashboard/dashboard.module').then(m => m.DashboardModule) 
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadChildren: () => import('./dashboard/dashboard.module').then((m) => m.DashboardModule),
       },
-      { 
-        path: 'user-management', 
-        loadChildren: () => import('./user-management/user-management.module').then(m => m.UserManagementModule) 
+      {
+        path: 'user-management',
+        loadChildren: () =>
+          import('./user-management/user-management.module').then((m) => m.UserManagementModule),
       },
-      { 
-        path: 'roles', 
-        loadChildren: () => import('./roles/roles.module').then(m => m.RolesModule) 
+      {
+        path: 'roles',
+        loadChildren: () => import('./roles/roles.module').then((m) => m.RolesModule),
       },
-      { 
-        path: 'settings', 
-        loadChildren: () => import('./settings/settings.module').then(m => m.SettingsModule) 
-      }
-    ]
+      {
+        path: 'settings',
+        loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule),
+      },
+    ],
   },
   {
     path: 'auth',
-    loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule),
-    canActivate: [GuestGuard]
+    loadChildren: () => import('./auth/auth.module').then((m) => m.AuthModule),
+    canActivate: [GuestGuard],
   },
   { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
-  { path: '**', redirectTo: '/auth/login' }
+  { path: '**', redirectTo: '/auth/login' },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
 export class AppRoutingModule {}

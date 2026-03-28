@@ -12,18 +12,23 @@
       }
     </div>
     <button class="btn-toggle" (click)="toggleCollapse()">
-      <i class="fas" [class.fa-bars]="isCollapsedState()" [class.fa-times]="!isCollapsedState()"></i>
+      <i
+        class="fas"
+        [class.fa-bars]="isCollapsedState()"
+        [class.fa-times]="!isCollapsedState()"
+      ></i>
     </button>
   </div>
 
   <nav class="sidebar-nav">
     @for (item of menuItems; track item.route) {
-      @if (!item.roles || hasAccess(item.roles)) {
+      @if (!item.permission || hasAccess(item.permission)) {
         <a
           class="nav-item"
           [routerLink]="item.route"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }">
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+        >
           <i class="fas" [class]="item.icon"></i>
           @if (!isCollapsedState()) {
             <span>{{ item.label }}</span>
@@ -36,7 +41,11 @@
   <div class="sidebar-footer">
     <app-dropdown [alignRight]="true">
       <div dropdown-trigger class="user-profile">
-        <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
+        @if (currentUser()?.profile_photo) {
+          <img [src]="currentUser()?.profile_photo" alt="Profile" class="user-avatar-img" />
+        } @else {
+          <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
+        }
         @if (!isCollapsedState()) {
           <div class="user-info">
             <span class="user-name">{{ currentUser()?.username }}</span>

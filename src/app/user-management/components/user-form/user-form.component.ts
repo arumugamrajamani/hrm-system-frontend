@@ -1,11 +1,15 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UserApiService } from '../../services';
-import { User } from '../../../core/models';
 import { ToasterService, ModalService } from '../../../core/services';
 import { PasswordStrengthPipe } from '../../../shared/pipes/password-strength.pipe';
-import { debounceTime, map, catchError, of } from 'rxjs';
 
 function mobileValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
@@ -13,12 +17,23 @@ function mobileValidator(control: AbstractControl): ValidationErrors | null {
   return mobileRegex.test(control.value) ? null : { invalidMobile: true };
 }
 
+function passwordValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+  const errors: ValidationErrors = {};
+  if (value.length < 8) errors['minlength'] = true;
+  if (!/[A-Z]/.test(value)) errors['uppercase'] = true;
+  if (!/[0-9]/.test(value)) errors['number'] = true;
+  if (!/[^a-zA-Z0-9]/.test(value)) errors['specialChar'] = true;
+  return Object.keys(errors).length > 0 ? errors : null;
+}
+
 @Component({
   selector: 'app-user-form',
   standalone: false,
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss'],
-  providers: [PasswordStrengthPipe]
+  providers: [PasswordStrengthPipe],
 })
 export class UserFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -34,14 +49,19 @@ export class UserFormComponent implements OnInit {
   isEditMode = signal(false);
   userId = signal<number | null>(null);
   showPassword = signal(false);
+  profilePhotoPreview = signal<string | null>(null);
+  selectedFile: File | null = null;
 
   roles = [
     { id: 1, name: 'Admin' },
     { id: 2, name: 'Manager' },
-    { id: 3, name: 'User' }
+    { id: 3, name: 'User' },
   ];
 
   statuses = ['active', 'inactive', 'pending'];
+
+  allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+  maxFileSize = 2 * 1024 * 1024;
 
   ngOnInit(): void {
     this.initForm();
@@ -49,19 +69,19 @@ export class UserFormComponent implements OnInit {
   }
 
   private initForm(): void {
-    this.userForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
-      email: ['', [Validators.required, Validators.email], [this.emailAsyncValidator()]],
-      mobile: ['', [Validators.required, mobileValidator], [this.mobileAsyncValidator()]],
-      password: ['', this.isEditMode() ? [] : [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', this.isEditMode() ? [] : [Validators.required]],
-      firstName: [''],
-      lastName: [''],
-      roleId: ['', Validators.required],
-      status: ['active', Validators.required]
-    }, {
-      validators: this.passwordMatchValidator
-    });
+    this.userForm = this.fb.group(
+      {
+        username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
+        email: ['', [Validators.required, Validators.email]],
+        mobile: ['', [Validators.required, mobileValidator]],
+        password: ['', this.isEditMode() ? [] : [Validators.required, passwordValidator]],
+        confirmPassword: ['', this.isEditMode() ? [] : [Validators.required]],
+        role_id: ['', Validators.required],
+        status: ['active', Validators.required],
+        profile_photo: [''],
+      },
+      { validators: this.passwordMatchValidator },
+    );
   }
 
   private checkEditMode(): void {
@@ -69,24 +89,25 @@ export class UserFormComponent implements OnInit {
     if (id) {
       this.isEditMode.set(true);
       this.userId.set(+id);
-
-      this.userForm = this.fb.group({
-        username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
-        email: ['', [Validators.required, Validators.email], [this.emailAsyncValidator(this.userId()!)]],
-        mobile: ['', [Validators.required, mobileValidator], [this.mobileAsyncValidator(this.userId()!)]],
-        firstName: [''],
-        lastName: [''],
-        roleId: ['', Validators.required],
-        status: ['active', Validators.required]
-      });
-
+      this.userForm = this.fb.group(
+        {
+          username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
+          email: ['', [Validators.required, Validators.email]],
+          mobile: ['', [Validators.required, mobileValidator]],
+          password: [''],
+          confirmPassword: [''],
+          role_id: ['', Validators.required],
+          status: ['active', Validators.required],
+          profile_photo: [''],
+        },
+        { validators: this.passwordMatchValidator },
+      );
       this.loadUser(id);
     }
   }
 
   private loadUser(id: number): void {
     this.isLoading.set(true);
-
     this.userApi.getUser(id).subscribe({
       next: (response) => {
         this.isLoading.set(false);
@@ -96,59 +117,62 @@ export class UserFormComponent implements OnInit {
             username: user.username,
             email: user.email,
             mobile: user.mobile,
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
-            roleId: user.role?.id,
-            status: user.status || 'active'
+            role_id: user.role_id || user.role?.id,
+            status: user.status || 'active',
+            profile_photo: user.profile_photo || '',
           });
+          if (user.profile_photo) {
+            this.profilePhotoPreview.set(user.profile_photo);
+          }
         }
       },
       error: () => {
         this.isLoading.set(false);
         this.toaster.error('Error', 'Failed to load user data');
         this.router.navigate(['/user-management']);
-      }
+      },
     });
   }
 
-  private emailAsyncValidator(excludeId?: number): AsyncValidatorFn {
-    return (control: AbstractControl) => {
-      if (!control.value || control.errors?.['email']) {
-        return of(null);
+  onFileSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      if (!this.allowedImageTypes.includes(file.type)) {
+        this.modalService.showError(
+          'Invalid File',
+          'Please upload a valid image (JPEG, PNG, GIF, WebP)',
+        );
+        input.value = '';
+        return;
       }
 
-      return of(control.value).pipe(
-        debounceTime(500),
-        map(() => control.value),
-        map((email) => this.userApi.checkEmailUnique(email, excludeId)),
-        map((request) => request),
-        catchError(() => of(null))
-      );
-    };
+      if (file.size > this.maxFileSize) {
+        this.modalService.showError('File Too Large', 'Image must be less than 2MB');
+        input.value = '';
+        return;
+      }
+
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.profilePhotoPreview.set(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
-  private mobileAsyncValidator(excludeId?: number): AsyncValidatorFn {
-    return (control: AbstractControl) => {
-      if (!control.value || control.errors?.['invalidMobile']) {
-        return of(null);
-      }
-
-      return of(control.value).pipe(
-        debounceTime(500),
-        map(() => control.value),
-        map((mobile) => this.userApi.checkMobileUnique(mobile, excludeId)),
-        map((request) => request),
-        catchError(() => of(null))
-      );
-    };
+  removeProfilePhoto(): void {
+    this.selectedFile = null;
+    this.profilePhotoPreview.set(null);
+    this.userForm.patchValue({ profile_photo: '' });
   }
 
   private passwordMatchValidator(group: FormGroup): ValidationErrors | null {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
-    
     if (!password && !confirmPassword) return null;
-    
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
@@ -157,12 +181,11 @@ export class UserFormComponent implements OnInit {
   }
 
   get passwordStrength() {
-    const password = this.userForm.get('password')?.value;
-    return this.passwordStrengthPipe.transform(password);
+    return this.passwordStrengthPipe.transform(this.userForm.get('password')?.value);
   }
 
   togglePassword(): void {
-    this.showPassword.update(v => !v);
+    this.showPassword.update((v) => !v);
   }
 
   onSubmit(): void {
@@ -172,44 +195,42 @@ export class UserFormComponent implements OnInit {
     }
 
     this.isLoading.set(true);
-
     const formValue = this.userForm.value;
-    const userData: Partial<User> = {
+
+    const userData: any = {
       username: formValue.username,
       email: formValue.email,
       mobile: formValue.mobile,
-      firstName: formValue.firstName,
-      lastName: formValue.lastName,
-      role: { id: formValue.roleId, name: this.roles.find(r => r.id === formValue.roleId)?.name || 'User', permissions: [] },
-      status: formValue.status
+      role_id: formValue.role_id,
+      status: formValue.status,
+      profile_photo: this.profilePhotoPreview() || null,
     };
 
     if (!this.isEditMode() && formValue.password) {
       userData.password = formValue.password;
     }
 
-    const request = this.isEditMode()
+    const apiCall = this.isEditMode()
       ? this.userApi.updateUser(this.userId()!, userData)
       : this.userApi.createUser(userData);
 
-    request.subscribe({
-      next: (response) => {
+    apiCall.subscribe({
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.toaster.success(
             this.isEditMode() ? 'User Updated' : 'User Created',
-            `User ${formValue.username} has been ${this.isEditMode() ? 'updated' : 'created'} successfully`
+            `User ${formValue.username} has been ${this.isEditMode() ? 'updated' : 'created'} successfully`,
           );
           this.router.navigate(['/user-management']);
         } else {
           this.modalService.showError('Error', response.message);
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.isLoading.set(false);
-        const message = error.error?.message || `Failed to ${this.isEditMode() ? 'update' : 'create'} user`;
-        this.modalService.showError('Error', message);
-      }
+        this.modalService.showError('Error', error.error?.message || 'Failed to save user');
+      },
     });
   }
 

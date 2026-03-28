@@ -6,26 +6,26 @@ import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 import { AuthInterceptor } from './core/interceptors';
 import { SharedModule } from './shared/shared.module';
+import { LayoutModule } from './layout/layout.module';
 
 @NgModule({
-  declarations: [
-    App
-  ],
+  declarations: [App],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    SharedModule
+    SharedModule,
+    LayoutModule,
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
-      multi: true
-    }
+      multi: true,
+    },
   ],
-  bootstrap: [App]
+  bootstrap: [App],
 })
 export class AppModule {}

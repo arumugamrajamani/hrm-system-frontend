@@ -11,7 +11,7 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
   selector: 'app-user-list',
   standalone: false,
   templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.scss']
+  styleUrls: ['./user-list.component.scss'],
 })
 export class UserListComponent implements OnInit {
   private userApi = inject(UserApiService);
@@ -22,16 +22,22 @@ export class UserListComponent implements OnInit {
   users = signal<User[]>([]);
   isLoading = signal(false);
   searchTerm = signal('');
-  
+
   pagination = signal({
     page: 1,
     limit: 10,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
 
   sortField = signal('createdAt');
   sortOrder = signal<'asc' | 'desc'>('desc');
+
+  roles = [
+    { id: 1, name: 'Admin' },
+    { id: 2, name: 'Manager' },
+    { id: 3, name: 'User' },
+  ];
 
   displayedPages = computed(() => {
     const total = this.pagination().totalPages;
@@ -60,38 +66,40 @@ export class UserListComponent implements OnInit {
   loadUsers(): void {
     this.isLoading.set(true);
 
-    this.userApi.getUsers({
-      page: this.pagination().page,
-      limit: this.pagination().limit,
-      sortBy: this.sortField(),
-      sortOrder: this.sortOrder(),
-      search: this.searchTerm()
-    }).subscribe({
-      next: (response) => {
-        this.isLoading.set(false);
-        this.users.set(response.data);
-        this.pagination.set({
-          page: response.page,
-          limit: response.limit,
-          total: response.total,
-          totalPages: response.totalPages
-        });
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toaster.error('Error', 'Failed to load users');
-      }
-    });
+    this.userApi
+      .getUsers({
+        page: this.pagination().page,
+        limit: this.pagination().limit,
+        sortBy: this.sortField(),
+        sortOrder: this.sortOrder(),
+        search: this.searchTerm(),
+      })
+      .subscribe({
+        next: (response) => {
+          this.isLoading.set(false);
+          this.users.set(response.data);
+          this.pagination.set({
+            page: response.page,
+            limit: response.limit,
+            total: response.total,
+            totalPages: response.totalPages,
+          });
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toaster.error('Error', 'Failed to load users');
+        },
+      });
   }
 
   onSearch(): void {
-    this.pagination.update(p => ({ ...p, page: 1 }));
+    this.pagination.update((p) => ({ ...p, page: 1 }));
     this.loadUsers();
   }
 
   onSort(field: string): void {
     if (this.sortField() === field) {
-      this.sortOrder.update(o => o === 'asc' ? 'desc' : 'asc');
+      this.sortOrder.update((o) => (o === 'asc' ? 'desc' : 'asc'));
     } else {
       this.sortField.set(field);
       this.sortOrder.set('asc');
@@ -101,7 +109,7 @@ export class UserListComponent implements OnInit {
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.pagination().totalPages) {
-      this.pagination.update(p => ({ ...p, page }));
+      this.pagination.update((p) => ({ ...p, page }));
       this.loadUsers();
     }
   }
@@ -117,7 +125,7 @@ export class UserListComponent implements OnInit {
   async deleteUser(user: User): Promise<void> {
     const confirmed = await this.modalService.confirm(
       'Delete User',
-      `Are you sure you want to delete "${user.username}"? This action cannot be undone.`
+      `Are you sure you want to delete "${user.username}"? This action cannot be undone.`,
     );
 
     if (confirmed) {
@@ -130,7 +138,7 @@ export class UserListComponent implements OnInit {
         },
         error: () => {
           this.toaster.error('Error', 'Failed to delete user');
-        }
+        },
       });
     }
   }
@@ -139,9 +147,15 @@ export class UserListComponent implements OnInit {
     const classes: Record<string, string> = {
       active: 'status-active',
       inactive: 'status-inactive',
-      pending: 'status-pending'
+      pending: 'status-pending',
     };
     return classes[status] || 'status-inactive';
+  }
+
+  getRoleName(roleId: number | undefined): string {
+    if (!roleId) return 'User';
+    const role = this.roles.find((r) => r.id === roleId);
+    return role ? role.name : 'User';
   }
 
   getSortIcon(field: string): string {

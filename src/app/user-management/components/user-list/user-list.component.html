@@ -17,7 +17,8 @@
           type="text"
           placeholder="Search users..."
           [(ngModel)]="searchTerm"
-          (keyup.enter)="onSearch()">
+          (keyup.enter)="onSearch()"
+        />
         <button class="btn-search" (click)="onSearch()">Search</button>
       </div>
     </div>
@@ -66,19 +67,20 @@
                 <tr>
                   <td>
                     <div class="user-info">
-                      <app-avatar [name]="user.username" [size]="40"></app-avatar>
+                      @if (user.profile_photo) {
+                        <img [src]="user.profile_photo" alt="Profile" class="user-avatar" />
+                      } @else {
+                        <app-avatar [name]="user.username" [size]="40"></app-avatar>
+                      }
                       <div class="user-details">
                         <span class="user-name">{{ user.username }}</span>
-                        @if (user.firstName || user.lastName) {
-                          <span class="user-fullname">{{ user.firstName }} {{ user.lastName }}</span>
-                        }
                       </div>
                     </div>
                   </td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.mobile }}</td>
                   <td>
-                    <span class="role-badge">{{ user.role ? user.role.name : 'User' }}</span>
+                    <span class="role-badge">{{ getRoleName(user.role_id || user.role?.id) }}</span>
                   </td>
                   <td>
                     <span class="status-badge" [class]="getStatusClass(user.status || 'active')">
@@ -91,7 +93,11 @@
                       <button class="btn-action btn-edit" (click)="editUser(user)" title="Edit">
                         <i class="fas fa-edit"></i>
                       </button>
-                      <button class="btn-action btn-delete" (click)="deleteUser(user)" title="Delete">
+                      <button
+                        class="btn-action btn-delete"
+                        (click)="deleteUser(user)"
+                        title="Delete"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -104,15 +110,16 @@
 
         <div class="pagination-container">
           <div class="pagination-info">
-            Showing {{ (pagination().page - 1) * pagination().limit + 1 }} to 
+            Showing {{ (pagination().page - 1) * pagination().limit + 1 }} to
             {{ pagination().page * pagination().limit }} of {{ pagination().total }} entries
           </div>
-          
+
           <div class="pagination">
             <button
               class="page-btn"
               [disabled]="pagination().page === 1"
-              (click)="changePage(pagination().page - 1)">
+              (click)="changePage(pagination().page - 1)"
+            >
               <i class="fas fa-chevron-left"></i>
             </button>
 
@@ -120,7 +127,8 @@
               <button
                 class="page-btn"
                 [class.active]="pagination().page === page"
-                (click)="changePage(page)">
+                (click)="changePage(page)"
+              >
                 {{ page }}
               </button>
             }
@@ -128,7 +136,8 @@
             <button
               class="page-btn"
               [disabled]="pagination().page === pagination().totalPages"
-              (click)="changePage(pagination().page + 1)">
+              (click)="changePage(pagination().page + 1)"
+            >
               <i class="fas fa-chevron-right"></i>
             </button>
           </div>
