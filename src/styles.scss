@@ -2,20 +2,36 @@
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
 :root {
-  --primary-color: #667eea;
-  --secondary-color: #764ba2;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #fd7e14;
-  --info-color: #17a2b8;
-  --dark-color: #0f172a;
-  --light-color: #f8f9fa;
-  --bg-dark: #0f172a;
-  --bg-card: #1e293b;
-  --border-color: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --primary-color: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+  --secondary-color: #8b5cf6;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --dark-color: #1e293b;
+  --light-color: #f8fafc;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-primary: 0 4px 14px 0 rgb(99 102 241 / 0.25);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.35s ease;
 }
 
 * {
@@ -35,9 +51,9 @@ body {
     Roboto,
     sans-serif;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-primary);
-  background: var(--bg-dark);
+  background: var(--bg-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -63,16 +79,16 @@ textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: var(--text-muted);
 }
 
 .sr-only {
@@ -95,7 +111,7 @@ h5,
 h6 {
   font-weight: 700;
   line-height: 1.2;
-  color: white;
+  color: var(--text-primary);
 }
 
 .btn {
@@ -105,11 +121,11 @@ h6 {
   gap: 8px;
   padding: 12px 24px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   white-space: nowrap;
 
   &:disabled {
@@ -125,21 +141,22 @@ h6 {
 .btn-primary {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-primary);
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgb(99 102 241 / 0.35);
   }
 }
 
 .btn-secondary {
-  background: var(--bg-card);
+  background: var(--bg-primary);
   border: 2px solid var(--border-color);
   color: var(--text-primary);
 
   &:hover:not(:disabled) {
-    background: var(--border-color);
+    background: var(--bg-secondary);
+    border-color: var(--text-muted);
   }
 }
 
@@ -148,7 +165,7 @@ h6 {
   color: white;
 
   &:hover:not(:disabled) {
-    background: #218838;
+    background: #059669;
   }
 }
 
@@ -157,7 +174,7 @@ h6 {
   color: white;
 
   &:hover:not(:disabled) {
-    background: #c82333;
+    background: #dc2626;
   }
 }
 
@@ -167,10 +184,10 @@ h6 {
 }
 
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .grid {

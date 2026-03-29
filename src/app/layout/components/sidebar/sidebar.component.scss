@@ -1,7 +1,7 @@
 .sidebar {
-  width: 260px;
+  width: 270px;
   height: 100vh;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -11,7 +11,8 @@
   transition:
     width 0.3s ease,
     transform 0.3s ease;
-  border-right: 1px solid #334155;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
 
   &.collapsed {
     width: 80px;
@@ -37,17 +38,18 @@
     .btn-toggle {
       position: absolute;
       right: -12px;
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 50%;
       width: 24px;
       height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #94a3b8;
+      color: #64748b;
       cursor: pointer;
       font-size: 12px;
+      box-shadow: var(--shadow-sm);
     }
 
     .nav-item {
@@ -95,28 +97,28 @@
   .brand-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
   }
 
   .brand-text {
     h1 {
       font-size: 20px;
       font-weight: 700;
-      color: white;
+      color: #1e293b;
       margin: 0;
       line-height: 1;
     }
 
     span {
       font-size: 11px;
-      color: #64748b;
+      color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -134,8 +136,8 @@
     transition: all 0.2s;
 
     &:hover {
-      background: #334155;
-      color: #e2e8f0;
+      background: #f1f5f9;
+      color: #6366f1;
     }
   }
 }
@@ -154,7 +156,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: #e2e8f0;
     border-radius: 2px;
   }
 }
@@ -164,7 +166,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  color: #94a3b8;
+  color: #64748b;
   text-decoration: none;
   border-radius: 12px;
   margin-bottom: 4px;
@@ -182,29 +184,30 @@
   }
 
   &:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #e2e8f0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    color: #6366f1;
 
     i {
-      color: #667eea;
+      color: #6366f1;
     }
   }
 
   &.active {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-    color: white;
-    border-left: 3px solid #667eea;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    color: #6366f1;
+    border-left: 3px solid #6366f1;
     margin-left: -3px;
+    font-weight: 600;
 
     i {
-      color: #667eea;
+      color: #6366f1;
     }
   }
 }
 
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid #e2e8f0;
   position: relative;
 
   .user-profile {
@@ -217,7 +220,11 @@
     transition: all 0.2s;
 
     &:hover {
-      background: rgba(102, 126, 234, 0.1);
+      background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.08) 0%,
+        rgba(139, 92, 246, 0.08) 100%
+      );
     }
 
     .user-avatar-img {
@@ -225,6 +232,7 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
+      border: 2px solid #e2e8f0;
     }
 
     .user-info {
@@ -233,7 +241,7 @@
 
       .user-name {
         display: block;
-        color: white;
+        color: #1e293b;
         font-weight: 600;
         font-size: 14px;
         white-space: nowrap;
@@ -243,14 +251,14 @@
 
       .user-role {
         display: block;
-        color: #64748b;
+        color: #94a3b8;
         font-size: 12px;
       }
     }
 
     .fa-chevron-down,
     .fa-chevron-up {
-      color: #64748b;
+      color: #94a3b8;
       font-size: 12px;
     }
   }
@@ -269,34 +277,38 @@
 .dropdown-menu-content {
   min-width: 200px;
   padding: 8px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 
   .dropdown-item {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    color: #e2e8f0;
+    color: #475569;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
 
     i {
       width: 20px;
-      color: #64748b;
+      color: #94a3b8;
     }
 
     &:hover {
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
+      background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.08) 0%,
+        rgba(139, 92, 246, 0.08) 100%
+      );
+      color: #6366f1;
 
       i {
-        color: #667eea;
+        color: #6366f1;
       }
     }
 
@@ -308,14 +320,14 @@
       }
 
       &:hover {
-        background: rgba(239, 68, 68, 0.1);
+        background: rgba(239, 68, 68, 0.08);
       }
     }
   }
 
   .dropdown-divider {
     height: 1px;
-    background: #334155;
+    background: #e2e8f0;
     margin: 8px 0;
   }
 }

@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse, AuthResponse } from '../../core/models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthApiService {
   private readonly baseUrl = environment.apiUrl;
@@ -15,39 +15,46 @@ export class AuthApiService {
   login(email: string, password: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/login`, {
       email,
-      password
+      password,
     });
   }
 
   verifyOtp(email: string, otp: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/verify-otp`, {
       email,
-      otp
+      otp,
     });
   }
 
   requestPasswordReset(email: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/forgot-password`, {
-      email
+      email,
     });
   }
 
   resetPassword(token: string, password: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/reset-password`, {
       token,
-      password
+      password,
     });
   }
 
   resendOtp(email: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/resend-otp`, {
-      email
+      email,
     });
   }
 
   refreshToken(refreshToken: string): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.baseUrl}/auth/refresh-token`, {
-      refreshToken
+      refreshToken,
+    });
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.baseUrl}/auth/change-password`, {
+      currentPassword,
+      newPassword,
     });
   }
 }

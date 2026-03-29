@@ -2,6 +2,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { MatTableModule } from '@angular/material/table';
+import { MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { ToasterComponent } from './components/toaster/toaster.component';
 import { ModalComponent } from './components/modal/modal.component';
 import { DropdownComponent } from './components/dropdown/dropdown.component';
@@ -16,25 +19,31 @@ import { FocusDirective } from './directives/focus.directive';
     DropdownComponent,
     AvatarComponent,
     PasswordStrengthPipe,
-    FocusDirective
+    FocusDirective,
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterModule
+    RouterModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
   ],
   exports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
     ToasterComponent,
     ModalComponent,
     DropdownComponent,
     AvatarComponent,
     PasswordStrengthPipe,
-    FocusDirective
-  ]
+    FocusDirective,
+  ],
 })
 export class SharedModule {}

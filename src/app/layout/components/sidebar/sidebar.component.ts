@@ -70,7 +70,7 @@ export class SidebarComponent implements OnInit {
 
   changePassword(): void {
     this.isUserMenuOpen.set(false);
-    this.router.navigate(['/auth/reset-password']);
+    this.router.navigate(['/profile/change-password']);
   }
 
   logout(): void {

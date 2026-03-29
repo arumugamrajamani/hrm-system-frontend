@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   padding: 20px;
 }
 
@@ -35,7 +35,7 @@
   .otp-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -60,7 +60,7 @@
   }
 
   .email-display {
-    color: #667eea;
+    color: #6366f1;
     font-size: 16px;
   }
 }
@@ -104,14 +104,28 @@
   }
 
   @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
   }
 
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-5px); }
-    40%, 80% { transform: translateX(5px); }
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20%,
+    60% {
+      transform: translateX(-5px);
+    }
+    40%,
+    80% {
+      transform: translateX(5px);
+    }
   }
 
   .otp-status {
@@ -124,7 +138,7 @@
       color: #718096;
 
       &.loading {
-        color: #667eea;
+        color: #6366f1;
 
         i {
           margin-right: 8px;
@@ -149,7 +163,7 @@
     &:hover:not(:disabled) {
       background: #edf2f7;
       border-color: #667eea;
-      color: #667eea;
+      color: #6366f1;
     }
 
     &:disabled {
@@ -179,7 +193,7 @@
     }
 
     &:hover {
-      color: #667eea;
+      color: #6366f1;
     }
   }
 }

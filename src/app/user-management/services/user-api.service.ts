@@ -26,6 +26,8 @@ export class UserApiService {
       httpParams = httpParams.set('search', params.search);
     }
 
+    console.log('API Request URL:', this.apiUrl, 'Params:', httpParams.toString());
+
     return this.http.get<PaginatedResponse<User>>(this.apiUrl, { params: httpParams });
   }
 
@@ -33,12 +35,16 @@ export class UserApiService {
     return this.http.get<ApiResponse<User>>(`${this.apiUrl}/${id}`);
   }
 
-  createUser(user: Partial<User>): Observable<ApiResponse<User>> {
+  createUser(user: Partial<User> | FormData): Observable<ApiResponse<User>> {
     return this.http.post<ApiResponse<User>>(this.apiUrl, user);
   }
 
   updateUser(id: number, user: Partial<User>): Observable<ApiResponse<User>> {
     return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, user);
+  }
+
+  updateUserWithFile(id: number, formData: FormData): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, formData);
   }
 
   deleteUser(id: number): Observable<ApiResponse> {

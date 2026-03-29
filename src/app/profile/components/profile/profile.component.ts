@@ -34,6 +34,7 @@ export class ProfileComponent implements OnInit {
   isLoading = signal(false);
   showPassword = signal(false);
   profilePhotoPreview = signal<string | null>(null);
+  selectedFile = signal<File | null>(null);
 
   statuses = ['active', 'inactive', 'pending'];
 
@@ -110,6 +111,7 @@ export class ProfileComponent implements OnInit {
         return;
       }
 
+      this.selectedFile.set(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         this.profilePhotoPreview.set(e.target?.result as string);
@@ -120,6 +122,7 @@ export class ProfileComponent implements OnInit {
 
   removeProfilePhoto(): void {
     this.profilePhotoPreview.set(null);
+    this.selectedFile.set(null);
     this.profileForm.patchValue({ profile_photo: '' });
   }
 
@@ -153,28 +156,63 @@ export class ProfileComponent implements OnInit {
     }
 
     const formValue = this.profileForm.getRawValue();
-    const updateData: any = {
-      email: formValue.email,
-      mobile: formValue.mobile,
-      profile_photo: this.profilePhotoPreview(),
-    };
+    const file = this.selectedFile();
 
-    this.userApi.updateUser(user.id, updateData).subscribe({
-      next: (response: any) => {
-        this.isLoading.set(false);
-        if (response.success) {
-          this.toaster.success('Success', 'Profile updated successfully');
-          const updatedUser = { ...user, ...updateData };
-          this.authService.updateUser(updatedUser as User);
-        } else {
-          this.toaster.error('Error', response.message || 'Failed to update profile');
-        }
-      },
-      error: (error: any) => {
-        this.isLoading.set(false);
-        this.toaster.error('Error', error.error?.message || 'Failed to update profile');
-      },
-    });
+    if (file) {
+      const formData = new FormData();
+      formData.append('email', formValue.email);
+      formData.append('mobile', formValue.mobile);
+      formData.append('profile_photo', file);
+
+      this.userApi.updateUserWithFile(user.id, formData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            this.toaster.success('Success', 'Profile updated successfully');
+            const newPhoto = response.data?.profile_photo || response.data?.avatar;
+            const updatedUser = {
+              ...user,
+              email: formValue.email,
+              mobile: formValue.mobile,
+              profile_photo: newPhoto || this.profilePhotoPreview(),
+            };
+            this.authService.updateUser(updatedUser as User);
+            if (newPhoto) {
+              this.profilePhotoPreview.set(newPhoto);
+            }
+            this.selectedFile.set(null);
+          } else {
+            this.toaster.error('Error', response.message || 'Failed to update profile');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.toaster.error('Error', error.error?.message || 'Failed to update profile');
+        },
+      });
+    } else {
+      const updateData: any = {
+        email: formValue.email,
+        mobile: formValue.mobile,
+      };
+
+      this.userApi.updateUser(user.id, updateData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            this.toaster.success('Success', 'Profile updated successfully');
+            const updatedUser = { ...user, ...updateData };
+            this.authService.updateUser(updatedUser as User);
+          } else {
+            this.toaster.error('Error', response.message || 'Failed to update profile');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.toaster.error('Error', error.error?.message || 'Failed to update profile');
+        },
+      });
+    }
   }
 
   cancel(): void {

@@ -1,12 +1,12 @@
 .login-wrapper {
   display: flex;
   min-height: 100vh;
-  background: #0f172a;
+  background: #f8fafc;
 }
 
 .login-left {
   flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   padding: 60px;
   display: flex;
   flex-direction: column;
@@ -22,8 +22,8 @@
     width: 200%;
     height: 200%;
     background:
-      radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+      radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
     animation: float 20s ease-in-out infinite;
   }
 
@@ -34,7 +34,7 @@
     right: -100px;
     width: 400px;
     height: 400px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
   }
 }
@@ -57,14 +57,15 @@
   .brand-icon {
     width: 80px;
     height: 80px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
-    border-radius: 20px;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 
     i {
       font-size: 36px;
@@ -73,16 +74,16 @@
   }
 
   h1 {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
     color: white;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     letter-spacing: -0.5px;
   }
 
   p {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 17px;
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 
@@ -94,19 +95,19 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 15px;
+    margin-bottom: 24px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
 
     i {
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 18px;
     }
   }
 }
@@ -117,7 +118,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #1e293b;
+  background: #ffffff;
 }
 
 .login-card {
@@ -125,18 +126,18 @@
   max-width: 420px;
 
   .card-header {
-    margin-bottom: 32px;
+    margin-bottom: 36px;
 
     h2 {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 700;
-      color: white;
-      margin-bottom: 8px;
+      color: #1e293b;
+      margin-bottom: 10px;
     }
 
     p {
       font-size: 15px;
-      color: #94a3b8;
+      color: #64748b;
     }
   }
 }
@@ -148,8 +149,8 @@
     label {
       display: block;
       font-size: 14px;
-      font-weight: 500;
-      color: #e2e8f0;
+      font-weight: 600;
+      color: #374151;
       margin-bottom: 8px;
     }
 
@@ -166,7 +167,7 @@
 
     .forgot-link {
       font-size: 13px;
-      color: #667eea;
+      color: #6366f1;
       text-decoration: none;
       font-weight: 500;
 
@@ -184,7 +185,7 @@
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: #64748b;
+      color: #94a3b8;
       font-size: 16px;
       z-index: 1;
     }
@@ -193,21 +194,22 @@
     input {
       width: 100%;
       padding: 14px 44px 14px 48px;
-      background: #0f172a;
-      border: 2px solid #334155;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
       border-radius: 12px;
       font-size: 15px;
-      color: white;
+      color: #1e293b;
       transition: all 0.3s ease;
 
       &::placeholder {
-        color: #64748b;
+        color: #94a3b8;
       }
 
       &:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        border-color: #6366f1;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
       }
 
       &.error {
@@ -222,14 +224,14 @@
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: #64748b;
+      color: #94a3b8;
       cursor: pointer;
       padding: 0;
       font-size: 16px;
       transition: color 0.2s;
 
       &:hover {
-        color: #94a3b8;
+        color: #64748b;
       }
     }
 
@@ -266,15 +268,15 @@
       .checkmark {
         width: 20px;
         height: 20px;
-        border: 2px solid #334155;
+        border: 2px solid #e2e8f0;
         border-radius: 6px;
         position: relative;
         transition: all 0.2s;
       }
 
       input:checked + .checkmark {
-        background: #667eea;
-        border-color: #667eea;
+        background: #6366f1;
+        border-color: #6366f1;
 
         &::after {
           content: '\f00c';
@@ -291,7 +293,7 @@
 
       .label-text {
         font-size: 14px;
-        color: #94a3b8;
+        color: #64748b;
       }
     }
   }
@@ -299,7 +301,7 @@
   .btn-login {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border: none;
     border-radius: 12px;
     color: white;
@@ -312,10 +314,11 @@
     justify-content: center;
     gap: 10px;
     margin-top: 32px;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
     }
 
     &:disabled {
@@ -338,7 +341,7 @@
     color: #64748b;
 
     a {
-      color: #667eea;
+      color: #6366f1;
       text-decoration: none;
       font-weight: 500;
 
@@ -367,7 +370,7 @@
   .login-card {
     .card-header {
       h2 {
-        font-size: 24px;
+        font-size: 26px;
       }
     }
   }

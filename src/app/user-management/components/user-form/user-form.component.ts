@@ -196,42 +196,79 @@ export class UserFormComponent implements OnInit {
 
     this.isLoading.set(true);
     const formValue = this.userForm.value;
+    const file = this.selectedFile;
 
-    const userData: any = {
-      username: formValue.username,
-      email: formValue.email,
-      mobile: formValue.mobile,
-      role_id: formValue.role_id,
-      status: formValue.status,
-      profile_photo: this.profilePhotoPreview() || null,
-    };
+    if (file) {
+      const formData = new FormData();
+      formData.append('username', formValue.username);
+      formData.append('email', formValue.email);
+      formData.append('mobile', formValue.mobile);
+      formData.append('role_id', formValue.role_id);
+      formData.append('status', formValue.status);
+      formData.append('profile_photo', file);
 
-    if (!this.isEditMode() && formValue.password) {
-      userData.password = formValue.password;
+      if (!this.isEditMode() && formValue.password) {
+        formData.append('password', formValue.password);
+      }
+
+      const apiCall = this.isEditMode()
+        ? this.userApi.updateUserWithFile(this.userId()!, formData)
+        : this.userApi.createUser(formData);
+
+      apiCall.subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            this.toaster.success(
+              this.isEditMode() ? 'User Updated' : 'User Created',
+              `User ${formValue.username} has been ${this.isEditMode() ? 'updated' : 'created'} successfully`,
+            );
+            this.router.navigate(['/user-management']);
+          } else {
+            this.modalService.showError('Error', response.message);
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.modalService.showError('Error', error.error?.message || 'Failed to save user');
+        },
+      });
+    } else {
+      const userData: any = {
+        username: formValue.username,
+        email: formValue.email,
+        mobile: formValue.mobile,
+        role_id: formValue.role_id,
+        status: formValue.status,
+      };
+
+      if (!this.isEditMode() && formValue.password) {
+        userData.password = formValue.password;
+      }
+
+      const apiCall = this.isEditMode()
+        ? this.userApi.updateUser(this.userId()!, userData)
+        : this.userApi.createUser(userData);
+
+      apiCall.subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            this.toaster.success(
+              this.isEditMode() ? 'User Updated' : 'User Created',
+              `User ${formValue.username} has been ${this.isEditMode() ? 'updated' : 'created'} successfully`,
+            );
+            this.router.navigate(['/user-management']);
+          } else {
+            this.modalService.showError('Error', response.message);
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.modalService.showError('Error', error.error?.message || 'Failed to save user');
+        },
+      });
     }
-
-    const apiCall = this.isEditMode()
-      ? this.userApi.updateUser(this.userId()!, userData)
-      : this.userApi.createUser(userData);
-
-    apiCall.subscribe({
-      next: (response: any) => {
-        this.isLoading.set(false);
-        if (response.success) {
-          this.toaster.success(
-            this.isEditMode() ? 'User Updated' : 'User Created',
-            `User ${formValue.username} has been ${this.isEditMode() ? 'updated' : 'created'} successfully`,
-          );
-          this.router.navigate(['/user-management']);
-        } else {
-          this.modalService.showError('Error', response.message);
-        }
-      },
-      error: (error: any) => {
-        this.isLoading.set(false);
-        this.modalService.showError('Error', error.error?.message || 'Failed to save user');
-      },
-    });
   }
 
   cancel(): void {

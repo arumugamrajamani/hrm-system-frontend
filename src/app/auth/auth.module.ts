@@ -15,21 +15,13 @@ const routes: Routes = [
       { path: 'login', component: LoginComponent, canActivate: [GuestGuard] },
       { path: 'otp', component: OtpComponent, canActivate: [GuestGuard] },
       { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [GuestGuard] },
-      { path: 'reset-password', component: ResetPasswordComponent, canActivate: [GuestGuard] }
-    ]
-  }
+      { path: 'reset-password', component: ResetPasswordComponent, canActivate: [GuestGuard] },
+    ],
+  },
 ];
 
 @NgModule({
-  declarations: [
-    LoginComponent,
-    OtpComponent,
-    ForgotPasswordComponent,
-    ResetPasswordComponent
-  ],
-  imports: [
-    SharedModule,
-    RouterModule.forChild(routes)
-  ]
+  declarations: [LoginComponent, OtpComponent, ForgotPasswordComponent, ResetPasswordComponent],
+  imports: [SharedModule, RouterModule.forChild(routes)],
 })
 export class AuthModule {}
