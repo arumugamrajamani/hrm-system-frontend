@@ -43,7 +43,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
   private handleError(error: HttpErrorResponse): Observable<any> {
     let errorMessage = '';
-    const toasterService = new ToasterService();
+    let showToast = true;
 
     switch (error.status) {
       case 400:
@@ -61,7 +61,7 @@ export class AuthInterceptor implements HttpInterceptor {
         errorMessage = error.error?.message || 'Resource not found.';
         break;
       case 422:
-        errorMessage = error.error?.message || 'Validation error.';
+        showToast = false;
         break;
       case 500:
         errorMessage = 'Server error. Please try again later.';
@@ -73,7 +73,10 @@ export class AuthInterceptor implements HttpInterceptor {
         errorMessage = error.error?.message || 'An unexpected error occurred.';
     }
 
-    toasterService.error('Error', errorMessage);
+    if (showToast && errorMessage) {
+      const toasterService = new ToasterService();
+      toasterService.error('Error', errorMessage);
+    }
     return throwError(() => error);
   }
 }

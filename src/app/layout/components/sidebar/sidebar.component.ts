@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { UserApiService } from '../../../user-management/services';
 import { User } from '../../../core/models';
+import { Department } from '../../../department';
 
 interface MenuItem {
   label: string;
@@ -36,7 +37,7 @@ export class SidebarComponent implements OnInit {
   menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'fa-th-large', route: '/dashboard' },
     { label: 'Users', icon: 'fa-users', route: '/user-management', permission: 'users.read' },
-    { label: 'Roles', icon: 'fa-user-shield', route: '/roles', permission: 'roles.read' },
+    { label: 'Departments', icon: 'fa-building', route: '/department' },
     { label: 'Settings', icon: 'fa-cog', route: '/settings' },
   ];
 

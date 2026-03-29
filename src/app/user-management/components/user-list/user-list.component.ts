@@ -72,9 +72,9 @@ export class UserListComponent implements OnInit {
   };
 
   roles = [
-    { id: 1, name: 'Admin' },
-    { id: 2, name: 'Manager' },
-    { id: 3, name: 'User' },
+    { id: 2, name: 'Admin' },
+    { id: 3, name: 'Manager' },
+    { id: 4, name: 'User' },
   ];
 
   displayedPages = computed(() => {
