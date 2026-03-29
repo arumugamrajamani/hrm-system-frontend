@@ -41,11 +41,12 @@
 
   <div class="sidebar-footer">
     <div class="user-profile" (click)="toggleUserMenu()">
-      @if (currentUser()?.profile_photo) {
-        <img [src]="currentUser()?.profile_photo" alt="Profile" class="user-avatar-img" />
-      } @else {
-        <app-avatar [name]="currentUser()?.username || 'User'" [size]="40"></app-avatar>
-      }
+      <app-avatar
+        [name]="currentUser()?.username || 'User'"
+        [imageUrl]="getProfilePhoto()"
+        [size]="40"
+      >
+      </app-avatar>
       @if (!isCollapsedState()) {
         <div class="user-info">
           <span class="user-name">{{ currentUser()?.username }}</span>

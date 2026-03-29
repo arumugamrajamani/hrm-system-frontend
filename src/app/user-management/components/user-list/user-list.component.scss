@@ -259,6 +259,12 @@
       position: relative;
       display: inline-block;
 
+      app-avatar {
+        ::ng-deep .avatar {
+          border: 2px solid #e2e8f0;
+        }
+      }
+
       .user-avatar {
         width: 40px;
         height: 40px;

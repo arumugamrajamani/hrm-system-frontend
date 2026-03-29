@@ -12,12 +12,6 @@
   <div class="card">
     <div class="card-header">
       <div class="search-box">
-        <select class="search-select" [(ngModel)]="searchType">
-          <option value="all">All</option>
-          <option value="username">Username</option>
-          <option value="email">Email</option>
-          <option value="mobile">Mobile</option>
-        </select>
         <div class="search-input-wrapper">
           <i class="fas fa-search"></i>
           <input
@@ -64,11 +58,12 @@
               <td mat-cell *matCellDef="let user">
                 <div class="user-info">
                   <div class="avatar-wrapper">
-                    @if (getProfilePhoto(user); as photo) {
-                      <img [src]="photo" alt="Profile" class="user-avatar" />
-                    } @else {
-                      <app-avatar [name]="user.username" [size]="40"></app-avatar>
-                    }
+                    <app-avatar
+                      [name]="user.username"
+                      [imageUrl]="user.profile_photo || user.avatar"
+                      [size]="40"
+                    >
+                    </app-avatar>
                     <button
                       class="edit-photo-btn"
                       (click)="onEditPhotoClick(user.id!)"

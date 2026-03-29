@@ -3,6 +3,8 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
+import { UserApiService } from '../../../user-management/services';
+import { User } from '../../../core/models';
 
 interface MenuItem {
   label: string;
@@ -24,6 +26,7 @@ export class SidebarComponent implements OnInit {
   @Output() menuClicked = new EventEmitter<void>();
 
   private authService = inject(AuthService);
+  private userApi = inject(UserApiService);
   private router = inject(Router);
 
   currentUser = this.authService.currentUser;
@@ -39,6 +42,21 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.isCollapsedState.set(this.isCollapsed);
+    this.loadUserProfile();
+  }
+
+  private loadUserProfile(): void {
+    const user = this.currentUser();
+    if (user?.id) {
+      this.userApi.getUser(user.id).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.authService.updateUser(response.data as User);
+          }
+        },
+        error: () => {},
+      });
+    }
   }
 
   toggleCollapse(): void {
@@ -61,6 +79,11 @@ export class SidebarComponent implements OnInit {
   hasAccess(permission?: string): boolean {
     if (!permission) return true;
     return this.authService.hasPermission(permission);
+  }
+
+  getProfilePhoto(): string | null {
+    const user = this.currentUser();
+    return user?.profile_photo || user?.avatar || null;
   }
 
   editProfile(): void {

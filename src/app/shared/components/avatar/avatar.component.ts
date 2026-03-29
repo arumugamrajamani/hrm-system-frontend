@@ -5,45 +5,56 @@ import { CommonModule } from '@angular/common';
   selector: 'app-avatar',
   standalone: false,
   template: `
-    @if (imageUrl) {
+    @if (processedImageUrl) {
       <img
-        [src]="imageUrl"
+        [src]="processedImageUrl"
         [alt]="name"
         class="avatar"
         [style.width.px]="size"
         [style.height.px]="size"
-        [style.fontSize.px]="size / 2.5">
+        [style.fontSize.px]="size / 2.5"
+      />
     } @else {
       <div
         class="avatar avatar-initials"
         [style.width.px]="size"
         [style.height.px]="size"
         [style.fontSize.px]="size / 2.5"
-        [style.backgroundColor]="getColor()">
+        [style.backgroundColor]="getColor()"
+      >
         {{ getInitials() }}
       </div>
     }
   `,
-  styles: [`
-    .avatar {
-      border-radius: 50%;
-      object-fit: cover;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  styles: [
+    `
+      .avatar {
+        border-radius: 50%;
+        object-fit: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-    .avatar-initials {
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-  `]
+      .avatar-initials {
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+    `,
+  ],
 })
 export class AvatarComponent {
   @Input() name = '';
-  @Input() imageUrl?: string;
+  @Input() imageUrl?: string | null;
   @Input() size = 40;
+
+  get processedImageUrl(): string | null {
+    if (!this.imageUrl) return null;
+    if (this.imageUrl.startsWith('data:')) return this.imageUrl;
+    const match = this.imageUrl.match(/^https?:\/\/[^/]+(\/.*)$/);
+    return match ? match[1] : this.imageUrl;
+  }
 
   getInitials(): string {
     if (!this.name) return '?';
@@ -61,8 +72,14 @@ export class AvatarComponent {
       hash = this.name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colors = [
-      '#3498db', '#e74c3c', '#2ecc71', '#9b59b6',
-      '#f39c12', '#1abc9c', '#34495e', '#e67e22'
+      '#3498db',
+      '#e74c3c',
+      '#2ecc71',
+      '#9b59b6',
+      '#f39c12',
+      '#1abc9c',
+      '#34495e',
+      '#e67e22',
     ];
     return colors[Math.abs(hash) % colors.length];
   }

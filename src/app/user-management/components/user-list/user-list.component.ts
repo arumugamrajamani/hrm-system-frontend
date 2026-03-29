@@ -245,10 +245,6 @@ export class UserListComponent implements OnInit {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  getProfilePhoto(user: User): string | null {
-    return user.profile_photo || null;
-  }
-
   onEditPhotoClick(userId: number): void {
     this.editingPhotoUserId.set(userId);
     const input = document.createElement('input');

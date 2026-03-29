@@ -27,16 +27,15 @@
           </div>
           <div class="profile-photo-section">
             <div class="photo-preview">
-              @if (profilePhotoPreview()) {
-                <img [src]="profilePhotoPreview()" alt="Profile Photo" />
-                <button type="button" class="btn-remove-photo" (click)="removeProfilePhoto()">
-                  <i class="fas fa-times"></i>
-                </button>
-              } @else {
-                <div class="photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
-              }
+              <app-avatar
+                [name]="f['username'].value || 'User'"
+                [imageUrl]="profilePhotoPreview()"
+                [size]="120"
+              >
+              </app-avatar>
+              <button type="button" class="btn-remove-photo" (click)="removeProfilePhoto()">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
             <div class="photo-upload">
               <label for="profile_photo" class="btn-upload">
