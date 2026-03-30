@@ -1,0 +1,58 @@
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  margin-bottom: 0;
+  min-width: 800px;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.8em;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mat-mdc-row:hover {
+  background-color: rgba(0, 123, 255, 0.04);
+}
+
+.mat-mdc-cell {
+  padding: 12px 8px;
+  vertical-align: middle;
+}
+
+.mat-mdc-header-cell {
+  font-weight: 600;
+  color: #495057;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+  }
+}

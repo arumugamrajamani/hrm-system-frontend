@@ -1,0 +1,197 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-graduation-cap me-2"></i>
+        {{ isEditMode() ? 'Edit Education' : 'Add Education' }}
+      </h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          @if (hasGlobalError()) {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Error:</strong> {{ getGlobalError() }}
+              <button type="button" class="btn-close" (click)="clearGlobalError()"></button>
+            </div>
+          }
+
+          <form [formGroup]="educationForm()" (ngSubmit)="onSubmit()">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="educationName" class="form-label">
+                  Education Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="educationName"
+                  formControlName="education_name"
+                  [class.is-invalid]="isFieldInvalid('education_name')"
+                  placeholder="Enter education name"
+                />
+                @if (isFieldInvalid('education_name')) {
+                  <div class="invalid-feedback d-block">
+                    @if (educationForm().get('education_name')?.errors?.['required']) {
+                      Education name is required
+                    } @else if (educationForm().get('education_name')?.errors?.['minlength']) {
+                      Education name must be at least 2 characters
+                    } @else if (educationForm().get('education_name')?.errors?.['serverError']) {
+                      <i class="fas fa-exclamation-circle me-1"></i>
+                      {{ educationForm().get('education_name')?.errors?.['serverError'] }}
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label for="educationCode" class="form-label">
+                  Education Code <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="educationCode"
+                  formControlName="education_code"
+                  [class.is-invalid]="isFieldInvalid('education_code')"
+                  placeholder="e.g., BE, MTECH"
+                />
+                @if (isFieldInvalid('education_code')) {
+                  <div class="invalid-feedback d-block">
+                    @if (educationForm().get('education_code')?.errors?.['required']) {
+                      Education code is required
+                    } @else if (educationForm().get('education_code')?.errors?.['pattern']) {
+                      Code can only contain letters, numbers, and hyphens
+                    } @else if (educationForm().get('education_code')?.errors?.['serverError']) {
+                      <i class="fas fa-exclamation-circle me-1"></i>
+                      {{ educationForm().get('education_code')?.errors?.['serverError'] }}
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="level" class="form-label">
+                  Level <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  id="level"
+                  formControlName="level"
+                  [class.is-invalid]="isFieldInvalid('level')"
+                >
+                  <option value="">Select Level</option>
+                  @for (level of levels; track level) {
+                    <option [value]="level">{{ level }}</option>
+                  }
+                </select>
+                @if (isFieldInvalid('level')) {
+                  <div class="invalid-feedback d-block">Level is required</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" formControlName="status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <small class="form-text text-muted">
+                  Inactive educations won't appear in active lists
+                </small>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                id="description"
+                formControlName="description"
+                rows="4"
+                placeholder="Enter education description (optional)"
+              ></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="!isFormValid() || isSubmitting()"
+              >
+                @if (isSubmitting()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                } @else {
+                  <i class="fas fa-save me-2"></i>
+                  {{ isEditMode() ? 'Update' : 'Create' }} Education
+                }
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="onCancel()">
+                <i class="fas fa-times me-2"></i>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Help
+          </h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Education name is required and must be unique
+            </li>
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Education code must be unique (e.g., BE, MTECH)
+            </li>
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Select the appropriate level for education
+            </li>
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Active educations are visible in the system
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      @if (isEditMode() && education()) {
+        <div class="card shadow-sm mt-3">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-history me-2"></i>
+              Education Info
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2"><strong>ID:</strong> {{ education()?.id }}</p>
+            <p class="mb-2">
+              <strong>Created:</strong> {{ education()?.created_at | date: 'medium' }}
+            </p>
+            <p class="mb-0">
+              <strong>Updated:</strong> {{ education()?.updated_at | date: 'medium' }}
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

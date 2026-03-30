@@ -1,0 +1,111 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-building me-2"></i>
+        Department Management
+      </h2>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" (click)="navigateToAdd()">
+        <i class="fas fa-plus me-2"></i>
+        Add Department
+      </button>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name or code..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select
+        class="form-select"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="onStatusChange($event)"
+      >
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <div class="btn-group w-100" role="group">
+        <input
+          type="radio"
+          class="btn-check"
+          name="viewMode"
+          id="tableView"
+          value="table"
+          [ngModel]="viewMode()"
+          (ngModelChange)="onViewModeChange($event)"
+        />
+        <label class="btn btn-outline-primary" for="tableView">
+          <i class="fas fa-table me-1"></i> Table
+        </label>
+
+        <input
+          type="radio"
+          class="btn-check"
+          name="viewMode"
+          id="treeView"
+          value="tree"
+          [ngModel]="viewMode()"
+          (ngModelChange)="onViewModeChange($event)"
+        />
+        <label class="btn btn-outline-primary" for="treeView">
+          <i class="fas fa-sitemap me-1"></i> Tree
+        </label>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 text-muted">Loading departments...</p>
+    </div>
+  } @else if (viewMode() === 'table') {
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <app-department-table
+          [departments]="departments()"
+          [pageSize]="pageSize()"
+          [totalElements]="totalElements()"
+          [currentPage]="currentPage()"
+          (edit)="navigateToEdit($event)"
+          (delete)="onDelete($event)"
+          (page)="onPageChange($event)"
+          (sort)="onSortChange($event)"
+        >
+        </app-department-table>
+      </div>
+    </div>
+  } @else {
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-sitemap me-2"></i>
+          Department Hierarchy
+        </h5>
+      </div>
+      <div class="card-body">
+        <app-department-tree [treeData]="departmentTree()" (nodeSelect)="onNodeSelect($event)">
+        </app-department-tree>
+      </div>
+    </div>
+  }
+</div>

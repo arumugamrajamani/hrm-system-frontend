@@ -1,0 +1,41 @@
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-right: none;
+}
+
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.btn-group .btn {
+  border-radius: 6px;
+}
+
+.btn-group .btn-check:checked + .btn {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 2px solid #f0f0f0;
+  font-weight: 500;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}

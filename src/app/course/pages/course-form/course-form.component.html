@@ -1,0 +1,173 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-book me-2"></i>
+        {{ isEditMode() ? 'Edit Course' : 'Add Course' }}
+      </h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          @if (hasGlobalError()) {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Error:</strong> {{ getGlobalError() }}
+              <button type="button" class="btn-close" (click)="clearGlobalError()"></button>
+            </div>
+          }
+
+          <form [formGroup]="courseForm()" (ngSubmit)="onSubmit()">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="courseName" class="form-label">
+                  Course Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="courseName"
+                  formControlName="course_name"
+                  [class.is-invalid]="isFieldInvalid('course_name')"
+                  placeholder="Enter course name"
+                />
+                @if (isFieldInvalid('course_name')) {
+                  <div class="invalid-feedback d-block">
+                    @if (courseForm().get('course_name')?.errors?.['required']) {
+                      Course name is required
+                    } @else if (courseForm().get('course_name')?.errors?.['minlength']) {
+                      Course name must be at least 2 characters
+                    } @else if (courseForm().get('course_name')?.errors?.['serverError']) {
+                      <i class="fas fa-exclamation-circle me-1"></i>
+                      {{ courseForm().get('course_name')?.errors?.['serverError'] }}
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label for="courseCode" class="form-label">
+                  Course Code <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="courseCode"
+                  formControlName="course_code"
+                  [class.is-invalid]="isFieldInvalid('course_code')"
+                  placeholder="e.g., CSE, ECE"
+                />
+                @if (isFieldInvalid('course_code')) {
+                  <div class="invalid-feedback d-block">
+                    @if (courseForm().get('course_code')?.errors?.['required']) {
+                      Course code is required
+                    } @else if (courseForm().get('course_code')?.errors?.['pattern']) {
+                      Code can only contain letters, numbers, and hyphens
+                    } @else if (courseForm().get('course_code')?.errors?.['serverError']) {
+                      <i class="fas fa-exclamation-circle me-1"></i>
+                      {{ courseForm().get('course_code')?.errors?.['serverError'] }}
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" formControlName="status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <small class="form-text text-muted">
+                  Inactive courses won't appear in active lists
+                </small>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                id="description"
+                formControlName="description"
+                rows="4"
+                placeholder="Enter course description (optional)"
+              ></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="!isFormValid() || isSubmitting()"
+              >
+                @if (isSubmitting()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                } @else {
+                  <i class="fas fa-save me-2"></i>
+                  {{ isEditMode() ? 'Update' : 'Create' }} Course
+                }
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="onCancel()">
+                <i class="fas fa-times me-2"></i>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Help
+          </h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Course name is required and must be unique
+            </li>
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Course code must be unique (e.g., CSE, ECE)
+            </li>
+            <li class="mb-3">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Active courses are visible in the system
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      @if (isEditMode() && course()) {
+        <div class="card shadow-sm mt-3">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-history me-2"></i>
+              Course Info
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2"><strong>ID:</strong> {{ course()?.id }}</p>
+            <p class="mb-2">
+              <strong>Created:</strong> {{ course()?.created_at | date: 'medium' }}
+            </p>
+            <p class="mb-0">
+              <strong>Updated:</strong> {{ course()?.updated_at | date: 'medium' }}
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

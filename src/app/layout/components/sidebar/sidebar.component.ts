@@ -10,8 +10,9 @@ import { Department } from '../../../department';
 interface MenuItem {
   label: string;
   icon: string;
-  route: string;
+  route?: string;
   permission?: string;
+  children?: MenuItem[];
 }
 
 @Component({
@@ -33,11 +34,21 @@ export class SidebarComponent implements OnInit {
   currentUser = this.authService.currentUser;
   isCollapsedState = signal(false);
   isUserMenuOpen = signal(false);
+  expandedMenus = signal<Set<string>>(new Set(['Masters']));
 
   menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'fa-th-large', route: '/dashboard' },
     { label: 'Users', icon: 'fa-users', route: '/user-management', permission: 'users.read' },
-    { label: 'Departments', icon: 'fa-building', route: '/department' },
+    {
+      label: 'Masters',
+      icon: 'fa-folder-open',
+      children: [
+        { label: 'Departments', icon: 'fa-building', route: '/department' },
+        { label: 'Educations', icon: 'fa-graduation-cap', route: '/educations' },
+        { label: 'Courses', icon: 'fa-book', route: '/courses' },
+        { label: 'Education-Course Mapping', icon: 'fa-link', route: '/education-course-mapping' },
+      ],
+    },
     { label: 'Settings', icon: 'fa-cog', route: '/settings' },
   ];
 
@@ -63,6 +74,20 @@ export class SidebarComponent implements OnInit {
   toggleCollapse(): void {
     this.isCollapsedState.update((v) => !v);
     this.collapsedChange.emit(this.isCollapsedState());
+  }
+
+  toggleMasterMenu(menuLabel: string): void {
+    const expanded = new Set(this.expandedMenus());
+    if (expanded.has(menuLabel)) {
+      expanded.delete(menuLabel);
+    } else {
+      expanded.add(menuLabel);
+    }
+    this.expandedMenus.set(expanded);
+  }
+
+  isMenuExpanded(menuLabel: string): boolean {
+    return this.expandedMenus().has(menuLabel);
   }
 
   toggleUserMenu(): void {
