@@ -60,9 +60,6 @@ export class AuthService {
   }
 
   login(token: string, user: User): void {
-    console.log('Login called with token:', token ? 'Token provided' : 'No token');
-    console.log('Login called with user:', user);
-
     const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + 24);
 
@@ -86,9 +83,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    const token = this.tokenSignal() || localStorage.getItem(this.TOKEN_KEY);
-    console.log('Getting Token:', token ? 'Token exists' : 'No token');
-    return token;
+    return this.tokenSignal() || localStorage.getItem(this.TOKEN_KEY);
   }
 
   hasRole(roles: string[]): boolean {

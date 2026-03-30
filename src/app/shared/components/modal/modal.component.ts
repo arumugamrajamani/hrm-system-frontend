@@ -1,10 +1,12 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalService } from '../../../core/services';
 
 @Component({
   selector: 'app-modal',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (modalService.isOpen()) {
       <div class="modal-backdrop" (click)="onBackdropClick()">

@@ -26,8 +26,6 @@ export class UserApiService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    console.log('API Request URL:', this.apiUrl, 'Params:', httpParams.toString());
-
     return this.http.get<PaginatedResponse<User>>(this.apiUrl, { params: httpParams });
   }
 

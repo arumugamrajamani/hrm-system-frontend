@@ -192,6 +192,6 @@ export class DepartmentListComponent implements OnInit, OnDestroy {
   }
 
   onNodeSelect(node: DepartmentNode): void {
-    console.log('Selected department:', node);
+    // Handle node selection
   }
 }

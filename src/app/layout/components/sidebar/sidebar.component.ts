@@ -1,4 +1,15 @@
-import { Component, inject, signal, Output, EventEmitter, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  Output,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services';
@@ -18,15 +29,17 @@ interface MenuItem {
 @Component({
   selector: 'app-sidebar',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isCollapsed = false;
   @Input() isMobileOpen = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
   @Output() menuClicked = new EventEmitter<void>();
 
+  private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   private userApi = inject(UserApiService);
   private router = inject(Router);
@@ -57,17 +70,25 @@ export class SidebarComponent implements OnInit {
     this.loadUserProfile();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadUserProfile(): void {
     const user = this.currentUser();
     if (user?.id) {
-      this.userApi.getUser(user.id).subscribe({
-        next: (response) => {
-          if (response.success && response.data) {
-            this.authService.updateUser(response.data as User);
-          }
-        },
-        error: () => {},
-      });
+      this.userApi
+        .getUser(user.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.authService.updateUser(response.data as User);
+            }
+          },
+          error: () => {},
+        });
     }
   }
 

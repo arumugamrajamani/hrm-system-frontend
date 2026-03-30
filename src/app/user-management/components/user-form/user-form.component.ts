@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -31,6 +31,7 @@ function passwordValidator(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-user-form',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss'],
   providers: [PasswordStrengthPipe],

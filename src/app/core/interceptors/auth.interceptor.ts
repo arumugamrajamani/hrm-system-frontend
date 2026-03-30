@@ -16,12 +16,11 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private toasterService: ToasterService,
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('hrm_token');
-    console.log('Interceptor - Token:', token ? 'Token exists' : 'No token');
-    console.log('Interceptor - URL:', req.url);
 
     if (token) {
       req = req.clone({
@@ -29,9 +28,6 @@ export class AuthInterceptor implements HttpInterceptor {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('Interceptor - Added Bearer token');
-    } else {
-      console.log('Interceptor - No token added, request will be unauthenticated');
     }
 
     return next.handle(req).pipe(
@@ -74,8 +70,7 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     if (showToast && errorMessage) {
-      const toasterService = new ToasterService();
-      toasterService.error('Error', errorMessage);
+      this.toasterService.error('Error', errorMessage);
     }
     return throwError(() => error);
   }
