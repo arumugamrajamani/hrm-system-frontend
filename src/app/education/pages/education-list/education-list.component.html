@@ -133,16 +133,15 @@
           </table>
         </div>
 
-        @if (totalElements() > 0) {
-          <mat-paginator
-            [pageSizeOptions]="[10, 25, 50, 100]"
-            [pageSize]="pageSize()"
-            [length]="totalElements()"
-            [pageIndex]="currentPage() - 1"
-            (page)="onPageChange($event)"
-          >
-          </mat-paginator>
-        }
+        <mat-paginator
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageSize]="pageSize()"
+          [length]="totalElements()"
+          [pageIndex]="currentPage() - 1"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+        >
+        </mat-paginator>
       </div>
     </div>
   }

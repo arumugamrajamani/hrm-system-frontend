@@ -10,6 +10,8 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  signal,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -25,11 +27,52 @@ import { ModalService } from '../../../core/services';
   templateUrl: './department-table.component.html',
   styleUrls: ['./department-table.component.scss'],
 })
-export class DepartmentTableComponent implements AfterViewInit, OnChanges, OnDestroy {
-  @Input() departments: Department[] = [];
-  @Input() pageSize: number = 10;
-  @Input() totalElements: number = 0;
-  @Input() currentPage: number = 1;
+export class DepartmentTableComponent implements AfterViewInit, OnDestroy {
+  private _departments: Department[] = [];
+  private _pageSize: number = 10;
+  private _totalElements: number = 0;
+  private _currentPage: number = 1;
+
+  @Input()
+  set departments(value: Department[]) {
+    this._departments = value;
+    this.dataSource.data = value;
+    this.syncPaginator();
+    this.cdr.markForCheck();
+  }
+  get departments(): Department[] {
+    return this._departments;
+  }
+
+  @Input()
+  set pageSize(value: number) {
+    this._pageSize = value;
+    this.syncPaginator();
+    this.cdr.markForCheck();
+  }
+  get pageSize(): number {
+    return this._pageSize;
+  }
+
+  @Input()
+  set totalElements(value: number) {
+    this._totalElements = value;
+    this.syncPaginator();
+    this.cdr.markForCheck();
+  }
+  get totalElements(): number {
+    return this._totalElements;
+  }
+
+  @Input()
+  set currentPage(value: number) {
+    this._currentPage = value;
+    this.syncPaginator();
+    this.cdr.markForCheck();
+  }
+  get currentPage(): number {
+    return this._currentPage;
+  }
   @Output() edit = new EventEmitter<Department>();
   @Output() delete = new EventEmitter<Department>();
   @Output() page = new EventEmitter<{ pageIndex: number; pageSize: number }>();
@@ -54,11 +97,24 @@ export class DepartmentTableComponent implements AfterViewInit, OnChanges, OnDes
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sortDir;
+    this.dataSource.paginator = this.paginator;
+    this.syncPaginator();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['departments']) {
-      this.dataSource.data = this.departments;
+  private syncPaginator(): void {
+    if (!this.paginator) return;
+
+    if (this.paginator.length !== this.totalElements) {
+      this.paginator.length = this.totalElements;
+    }
+
+    const expectedIndex = this.currentPage - 1;
+    if (this.paginator.pageIndex !== expectedIndex) {
+      this.paginator.pageIndex = expectedIndex;
+    }
+
+    if (this.paginator.pageSize !== this.pageSize) {
+      this.paginator.pageSize = this.pageSize;
     }
   }
 
@@ -88,6 +144,7 @@ export class DepartmentTableComponent implements AfterViewInit, OnChanges, OnDes
       pageIndex: event.pageIndex + 1,
       pageSize: event.pageSize,
     });
+    this.cdr.markForCheck();
   }
 
   onSortChange(event: any): void {

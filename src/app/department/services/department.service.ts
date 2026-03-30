@@ -50,8 +50,7 @@ export class DepartmentService {
           timestamp: Date.now(),
         });
       }),
-      catchError((error) => {
-        console.error('Error fetching departments:', error);
+      catchError(() => {
         return of({
           data: [],
           total: 0,
@@ -66,8 +65,7 @@ export class DepartmentService {
   getDepartment(id: number): Observable<Department | null> {
     return this.apiService.getDepartment(id).pipe(
       map((response) => (response.success ? response.data! : null)),
-      catchError((error) => {
-        console.error('Error fetching department:', error);
+      catchError(() => {
         return of(null);
       }),
     );
@@ -112,8 +110,7 @@ export class DepartmentService {
         }
         return false;
       }),
-      catchError((error) => {
-        console.error('Error deleting department:', error);
+      catchError(() => {
         return of(false);
       }),
     );
@@ -130,8 +127,7 @@ export class DepartmentService {
         }
         return null;
       }),
-      catchError((error) => {
-        console.error('Error activating department:', error);
+      catchError(() => {
         return of(null);
       }),
     );
@@ -148,8 +144,7 @@ export class DepartmentService {
         }
         return null;
       }),
-      catchError((error) => {
-        console.error('Error deactivating department:', error);
+      catchError(() => {
         return of(null);
       }),
     );
@@ -167,20 +162,17 @@ export class DepartmentService {
       })
       .pipe(
         map((response) => {
-          // Handle paginated response structure
           const departments = Array.isArray(response.data) ? response.data : [];
           this.allDepartmentsCache = departments;
           return departments;
         }),
-        catchError((error) => {
-          console.error('Error fetching all departments:', error);
+        catchError(() => {
           this.allDepartmentsCache = [];
           return of([]);
         }),
       );
   }
 
-  // Extract root departments from hierarchy
   getRootDepartmentsForDropdown(): Observable<Department[]> {
     return this.apiService.getDepartmentHierarchy().pipe(
       map((response) => {
@@ -199,8 +191,7 @@ export class DepartmentService {
         }
         return [];
       }),
-      catchError((error) => {
-        console.error('Error fetching root departments:', error);
+      catchError(() => {
         return of([]);
       }),
     );

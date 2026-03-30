@@ -1,8 +1,19 @@
-import { Component, inject, signal, OnInit, computed, ViewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  OnInit,
+  OnDestroy,
+  computed,
+  ViewChild,
+  ChangeDetectionStrategy,
+  ElementRef,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
+import { Subject, takeUntil } from 'rxjs';
 import { UserApiService } from '../../services';
 import { User } from '../../../core/models';
 import { ToasterService, ModalService } from '../../../core/services';
@@ -10,10 +21,12 @@ import { ToasterService, ModalService } from '../../../core/services';
 @Component({
   selector: 'app-user-list',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss'],
 })
-export class UserListComponent implements OnInit {
+export class UserListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   private userApi = inject(UserApiService);
   private toaster = inject(ToasterService);
   private modalService = inject(ModalService);
@@ -51,6 +64,8 @@ export class UserListComponent implements OnInit {
     'actions',
   ];
   dataSource = new MatTableDataSource<User>();
+
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   pagination = signal({
     page: 1,
@@ -101,6 +116,11 @@ export class UserListComponent implements OnInit {
     this.loadUsers();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadUsers(): void {
     this.isLoading.set(true);
 
@@ -109,7 +129,6 @@ export class UserListComponent implements OnInit {
       ? { page: paginationSignal.page || 1, limit: paginationSignal.limit || 10 }
       : { page: 1, limit: 10 };
     let searchValue = this.searchTerm;
-    console.log('loadUsers - pagination:', pagination);
 
     this.userApi
       .getUsers({
@@ -119,6 +138,7 @@ export class UserListComponent implements OnInit {
         sortOrder: this.sortOrder(),
         search: searchValue || undefined,
       })
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.isLoading.set(false);
@@ -144,20 +164,11 @@ export class UserListComponent implements OnInit {
   }
 
   onSearch(): void {
-    console.log(
-      'Search clicked - searchTerm:',
-      this.searchTerm,
-      'searchType:',
-      this.searchType,
-      'pagination:',
-      this.pagination(),
-    );
     this.pagination.update((p) => ({ ...p, page: 1 }));
     this.loadUsers();
   }
 
   onSortChange(sort: Sort): void {
-    console.log('onSortChange:', sort);
     this.pagination.update((p) => ({ ...p, page: 1 }));
     if (sort.direction) {
       this.sortField.set(this.getApiSortField(sort.active));
@@ -170,7 +181,6 @@ export class UserListComponent implements OnInit {
   }
 
   onPageChange(event: PageEvent): void {
-    console.log('onPageChange:', event);
     this.pagination.update((p) => ({
       ...p,
       page: event.pageIndex + 1,
@@ -201,17 +211,20 @@ export class UserListComponent implements OnInit {
     );
 
     if (confirmed) {
-      this.userApi.deleteUser(user.id!).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.toaster.success('Success', 'User deleted successfully');
-            this.loadUsers();
-          }
-        },
-        error: () => {
-          this.toaster.error('Error', 'Failed to delete user');
-        },
-      });
+      this.userApi
+        .deleteUser(user.id!)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.toaster.success('Success', 'User deleted successfully');
+              this.loadUsers();
+            }
+          },
+          error: () => {
+            this.toaster.error('Error', 'Failed to delete user');
+          },
+        });
     }
   }
 
@@ -247,36 +260,43 @@ export class UserListComponent implements OnInit {
 
   onEditPhotoClick(userId: number): void {
     this.editingPhotoUserId.set(userId);
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/jpeg,image/png,image/gif,image/webp';
-    input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files[0]) {
-        this.updateProfilePhoto(userId, target.files[0]);
-      }
-    };
-    input.click();
+    if (this.fileInput) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const userId = this.editingPhotoUserId();
+    if (target.files && target.files[0] && userId) {
+      this.updateProfilePhoto(userId, target.files[0]);
+    }
   }
 
   private updateProfilePhoto(userId: number, file: File): void {
     const formData = new FormData();
     formData.append('profile_photo', file);
 
-    this.userApi.updateUserWithFile(userId, formData).subscribe({
-      next: (response) => {
-        this.editingPhotoUserId.set(null);
-        if (response.success) {
-          this.toaster.success('Success', 'Profile photo updated successfully');
-          this.loadUsers();
-        } else {
-          this.toaster.error('Error', response.message || 'Failed to update photo');
-        }
-      },
-      error: () => {
-        this.editingPhotoUserId.set(null);
-        this.toaster.error('Error', 'Failed to update profile photo');
-      },
-    });
+    this.userApi
+      .updateUserWithFile(userId, formData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.editingPhotoUserId.set(null);
+          if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+          }
+          if (response.success) {
+            this.toaster.success('Success', 'Profile photo updated successfully');
+            this.loadUsers();
+          } else {
+            this.toaster.error('Error', response.message || 'Failed to update photo');
+          }
+        },
+        error: () => {
+          this.editingPhotoUserId.set(null);
+          this.toaster.error('Error', 'Failed to update profile photo');
+        },
+      });
   }
 }

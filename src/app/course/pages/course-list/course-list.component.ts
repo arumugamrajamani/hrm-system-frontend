@@ -2,9 +2,9 @@ import {
   Component,
   OnInit,
   OnDestroy,
-  ChangeDetectionStrategy,
   ChangeDetectorRef,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -25,6 +25,17 @@ import { Course } from '../../models';
 export class CourseListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+
+  private paginator?: MatPaginator;
+
+  @ViewChild(MatPaginator)
+  set matPaginator(paginator: MatPaginator | undefined) {
+    if (!paginator) return;
+
+    this.paginator = paginator;
+    this.dataSource.paginator = paginator;
+    this.syncPaginator();
+  }
 
   displayedColumns = ['course_name', 'course_code', 'status', 'actions'];
   dataSource = new MatTableDataSource<Course>([]);
@@ -77,24 +88,45 @@ export class CourseListComponent implements OnInit, OnDestroy {
       status: this.statusFilter(),
     };
 
-    this.courseService.getCourses(params).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.courses.set(response.data || []);
-          this.dataSource.data = response.data || [];
-          this.totalElements.set(response.pagination?.total || 0);
-          this.totalPages.set(response.pagination?.totalPages || 0);
-        }
-        this.isLoading.set(false);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.courses.set([]);
-        this.dataSource.data = [];
-        this.cdr.markForCheck();
-      },
-    });
+    this.courseService
+      .getCourses(params)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.courses.set(response.data || []);
+            this.dataSource.data = response.data || [];
+            this.totalElements.set(response.pagination?.total || 0);
+            this.totalPages.set(response.pagination?.totalPages || 0);
+            this.syncPaginator();
+          }
+          this.isLoading.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.courses.set([]);
+          this.dataSource.data = [];
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private syncPaginator(): void {
+    if (!this.paginator) return;
+
+    if (this.paginator.length !== this.totalElements()) {
+      this.paginator.length = this.totalElements();
+    }
+
+    const expectedIndex = this.currentPage() - 1;
+    if (this.paginator.pageIndex !== expectedIndex) {
+      this.paginator.pageIndex = expectedIndex;
+    }
+
+    if (this.paginator.pageSize !== this.pageSize()) {
+      this.paginator.pageSize = this.pageSize();
+    }
   }
 
   onSearchChange(value: string): void {

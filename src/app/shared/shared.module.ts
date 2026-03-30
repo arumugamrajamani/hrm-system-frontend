@@ -13,14 +13,7 @@ import { PasswordStrengthPipe } from './pipes/password-strength.pipe';
 import { FocusDirective } from './directives/focus.directive';
 
 @NgModule({
-  declarations: [
-    ToasterComponent,
-    ModalComponent,
-    DropdownComponent,
-    AvatarComponent,
-    PasswordStrengthPipe,
-    FocusDirective,
-  ],
+  declarations: [DropdownComponent, AvatarComponent, PasswordStrengthPipe, FocusDirective],
   imports: [
     CommonModule,
     FormsModule,
@@ -29,6 +22,8 @@ import { FocusDirective } from './directives/focus.directive';
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
+    ToasterComponent,
+    ModalComponent,
   ],
   exports: [
     CommonModule,

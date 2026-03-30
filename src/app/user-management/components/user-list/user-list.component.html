@@ -1,3 +1,11 @@
+<input
+  type="file"
+  #fileInput
+  style="display: none"
+  accept="image/jpeg,image/png,image/gif,image/webp"
+  (change)="onFileSelected($event)"
+/>
+
 <div class="user-list-container">
   <div class="page-header">
     <div class="header-title">

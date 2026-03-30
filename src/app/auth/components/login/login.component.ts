@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthApiService } from '../../services';
@@ -7,6 +7,7 @@ import { AuthService, ToasterService, ModalService } from '../../../core/service
 @Component({
   selector: 'app-login',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -54,7 +55,6 @@ export class LoginComponent {
     this.authApi.login(email, password).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        console.log('Login Response:', response);
 
         let user = null;
         let token = null;
@@ -75,13 +75,11 @@ export class LoginComponent {
           );
           this.router.navigateByUrl(this.returnUrl);
         } else {
-          console.error('No token or user in response:', response);
           this.modalService.showError('Login Failed', 'Invalid response from server');
         }
       },
       error: (error: any) => {
         this.isLoading.set(false);
-        console.log('Login Error:', error);
         const message = error.error?.message || 'An unexpected error occurred';
         this.modalService.showError('Login Failed', message);
       },
