@@ -8,7 +8,7 @@
       <button class="btn btn-sm btn-secondary" (click)="testApi()">Test API</button>
     </div>
     <div class="col-auto">
-      <button class="btn btn-primary" (click)="openCreateModal()">
+      <button *appHasPermission="'create'" class="btn btn-primary" (click)="openCreateModal()">
         <i class="fas fa-plus me-2"></i>
         Add Mapping
       </button>
@@ -107,6 +107,7 @@
                   <td>{{ mapping.created_at | date: 'medium' }}</td>
                   <td>
                     <button
+                      *appHasPermission="'delete'"
                       class="btn btn-sm btn-danger"
                       (click)="onDelete(mapping)"
                       title="Delete"
@@ -273,6 +274,7 @@
             Cancel
           </button>
           <button
+            *appHasPermission="'create'"
             type="submit"
             class="btn btn-primary"
             (click)="onSubmitForm(mappingForm)"

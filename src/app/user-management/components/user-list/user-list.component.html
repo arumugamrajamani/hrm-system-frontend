@@ -12,7 +12,7 @@
       <h1>User Management</h1>
       <p>Manage system users and their permissions</p>
     </div>
-    <button class="btn btn-primary" (click)="addUser()">
+    <button *appHasPermission="permissions.CREATE" class="btn btn-primary" (click)="addUser()">
       <i class="fas fa-plus"></i> Add User
     </button>
   </div>
@@ -39,7 +39,7 @@
           <i class="fas fa-users"></i>
           <h3>No users found</h3>
           <p>Get started by adding your first user</p>
-          <button class="btn btn-primary" (click)="addUser()">
+          <button *appHasPermission="permissions.CREATE" class="btn btn-primary" (click)="addUser()">
             <i class="fas fa-plus"></i> Add User
           </button>
         </div>
@@ -73,6 +73,7 @@
                     >
                     </app-avatar>
                     <button
+                      *appHasPermission="permissions.EDIT"
                       class="edit-photo-btn"
                       (click)="onEditPhotoClick(user.id!)"
                       [disabled]="editingPhotoUserId() === user.id"
@@ -125,18 +126,28 @@
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let user">
                 <div class="action-buttons">
-                  <button class="btn-action btn-edit" (click)="editUser(user)" title="Edit">
+                  <button
+                    *appHasPermission="permissions.EDIT"
+                    class="btn-action btn-edit"
+                    (click)="editUser(user)"
+                    title="Edit"
+                  >
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button class="btn-action btn-delete" (click)="deleteUser(user)" title="Delete">
+                  <button
+                    *appHasPermission="permissions.DELETE"
+                    class="btn-action btn-delete"
+                    (click)="deleteUser(user)"
+                    title="Delete"
+                  >
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
           </table>
         </div>
 

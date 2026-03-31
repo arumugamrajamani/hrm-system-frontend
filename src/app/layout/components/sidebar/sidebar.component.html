@@ -21,54 +21,52 @@
   </div>
 
   <nav class="sidebar-nav">
-    @for (item of menuItems; track item.label) {
-      @if (!item.permission || hasAccess(item.permission)) {
-        @if (item.children) {
-          <div class="nav-group">
-            <a
-              class="nav-item nav-group-header"
-              [class.expanded]="isMenuExpanded(item.label)"
-              (click)="toggleMasterMenu(item.label)"
-            >
-              <i class="fas" [class]="item.icon"></i>
-              @if (!isCollapsedState()) {
-                <span>{{ item.label }}</span>
-                <i
-                  class="fas fa-chevron-right arrow"
-                  [class.rotated]="isMenuExpanded(item.label)"
-                ></i>
-              }
-            </a>
-            @if (!isCollapsedState() && isMenuExpanded(item.label)) {
-              <div class="nav-group-children">
-                @for (child of item.children; track child.route) {
-                  <a
-                    class="nav-item nav-group-child"
-                    [routerLink]="child.route"
-                    routerLinkActive="active"
-                    (click)="onMenuClick()"
-                  >
-                    <i class="fas" [class]="child.icon"></i>
-                    <span>{{ child.label }}</span>
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        } @else {
+    @for (item of menuItems(); track item.label) {
+      @if (item.children) {
+        <div class="nav-group">
           <a
-            class="nav-item"
-            [routerLink]="item.route"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-            (click)="onMenuClick()"
+            class="nav-item nav-group-header"
+            [class.expanded]="isMenuExpanded(item.label)"
+            (click)="toggleMasterMenu(item.label)"
           >
             <i class="fas" [class]="item.icon"></i>
             @if (!isCollapsedState()) {
               <span>{{ item.label }}</span>
+              <i
+                class="fas fa-chevron-right arrow"
+                [class.rotated]="isMenuExpanded(item.label)"
+              ></i>
             }
           </a>
-        }
+          @if (!isCollapsedState() && isMenuExpanded(item.label)) {
+            <div class="nav-group-children">
+              @for (child of item.children; track child.route) {
+                <a
+                  class="nav-item nav-group-child"
+                  [routerLink]="child.route"
+                  routerLinkActive="active"
+                  (click)="onMenuClick()"
+                >
+                  <i class="fas" [class]="child.icon"></i>
+                  <span>{{ child.label }}</span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+          (click)="onMenuClick()"
+        >
+          <i class="fas" [class]="item.icon"></i>
+          @if (!isCollapsedState()) {
+            <span>{{ item.label }}</span>
+          }
+        </a>
       }
     }
   </nav>

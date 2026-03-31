@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { User } from '../models';
+import { User, getRoleLabel, normalizeRole } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -42,7 +42,7 @@ export class AuthService {
     this.currentUserSignal.set(user);
     this.isAuthenticatedSignal.set(true);
 
-    let roleName = 'user';
+    let roleName = getRoleLabel(normalizeRole(undefined, user.role_id));
     let permissions: string[] = [];
 
     if (typeof user.role === 'string') {
@@ -53,6 +53,9 @@ export class AuthService {
     } else if (user.role && typeof user.role === 'object') {
       roleName = user.role.name || user.role_name || 'user';
       permissions = user.role.permissions || user.permissions || [];
+    } else if (user.role_name) {
+      roleName = user.role_name;
+      permissions = user.permissions || [];
     }
 
     this.userRoleSignal.set(roleName);

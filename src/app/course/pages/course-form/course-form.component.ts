@@ -132,7 +132,7 @@ export class CourseFormComponent implements OnInit, OnDestroy {
           this.isSubmitting.set(false);
           if (response.success) {
             this.toasterService.success('Success', 'Course updated successfully');
-            this.router.navigate(['/course/list']);
+            this.router.navigate(['/courses/list']);
           } else {
             this.handleError(response);
           }
@@ -150,7 +150,7 @@ export class CourseFormComponent implements OnInit, OnDestroy {
           this.isSubmitting.set(false);
           if (response.success) {
             this.toasterService.success('Success', 'Course created successfully');
-            this.router.navigate(['/course/list']);
+            this.router.navigate(['/courses/list']);
           } else {
             this.handleError(response);
           }
@@ -166,7 +166,7 @@ export class CourseFormComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
-    this.router.navigate(['/course/list']);
+    this.router.navigate(['/courses/list']);
   }
 
   private handleError(error: any): void {

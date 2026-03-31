@@ -11,9 +11,17 @@ import { DropdownComponent } from './components/dropdown/dropdown.component';
 import { AvatarComponent } from './components/avatar/avatar.component';
 import { PasswordStrengthPipe } from './pipes/password-strength.pipe';
 import { FocusDirective } from './directives/focus.directive';
+import { HasPermissionDirective, HasRoleDirective } from './directives/has-permission.directive';
 
 @NgModule({
-  declarations: [DropdownComponent, AvatarComponent, PasswordStrengthPipe, FocusDirective],
+  declarations: [
+    DropdownComponent,
+    AvatarComponent,
+    PasswordStrengthPipe,
+    FocusDirective,
+    HasPermissionDirective,
+    HasRoleDirective,
+  ],
   imports: [
     CommonModule,
     FormsModule,
@@ -39,6 +47,8 @@ import { FocusDirective } from './directives/focus.directive';
     AvatarComponent,
     PasswordStrengthPipe,
     FocusDirective,
+    HasPermissionDirective,
+    HasRoleDirective,
   ],
 })
 export class SharedModule {}
