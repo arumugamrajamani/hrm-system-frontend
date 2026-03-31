@@ -147,11 +147,11 @@ export class CourseListComponent implements OnInit, OnDestroy {
   }
 
   navigateToAdd(): void {
-    this.router.navigate(['/course/add']);
+    this.router.navigate(['/courses/add']);
   }
 
   navigateToEdit(course: Course): void {
-    this.router.navigate(['/course/edit', course.id]);
+    this.router.navigate(['/courses/edit', course.id]);
   }
 
   async onDelete(course: Course): Promise<void> {

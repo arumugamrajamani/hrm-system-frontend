@@ -157,11 +157,11 @@ export class EducationListComponent implements OnInit, OnDestroy {
   }
 
   navigateToAdd(): void {
-    this.router.navigate(['/education/add']);
+    this.router.navigate(['/educations/add']);
   }
 
   navigateToEdit(education: Education): void {
-    this.router.navigate(['/education/edit', education.id]);
+    this.router.navigate(['/educations/edit', education.id]);
   }
 
   async onDelete(education: Education): Promise<void> {

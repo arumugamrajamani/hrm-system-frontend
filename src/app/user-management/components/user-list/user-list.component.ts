@@ -15,8 +15,8 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { Subject, takeUntil } from 'rxjs';
 import { UserApiService } from '../../services';
-import { User } from '../../../core/models';
-import { ToasterService, ModalService } from '../../../core/services';
+import { User, Permission, Role, getRoleLabel, normalizeRole } from '../../../core/models';
+import { ToasterService, ModalService, RbacService } from '../../../core/services';
 
 @Component({
   selector: 'app-user-list',
@@ -31,6 +31,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   private toaster = inject(ToasterService);
   private modalService = inject(ModalService);
   private router = inject(Router);
+  private rbacService = inject(RbacService);
 
   @ViewChild(MatPaginator)
   set matPaginator(paginator: MatPaginator | undefined) {
@@ -54,15 +55,20 @@ export class UserListComponent implements OnInit, OnDestroy {
   searchTerm = '';
   searchType = 'all';
   editingPhotoUserId = signal<number | null>(null);
-  displayedColumns: string[] = [
+  readonly permissions = Permission;
+  readonly rolesEnum = Role;
+  readonly canShowActions = computed(() =>
+    this.rbacService.hasAnyPermission([Permission.EDIT, Permission.DELETE]),
+  );
+  readonly displayedColumns = computed(() => [
     'username',
     'email',
     'mobile',
     'role',
     'status',
     'createdAt',
-    'actions',
-  ];
+    ...(this.canShowActions() ? ['actions'] : []),
+  ]);
   dataSource = new MatTableDataSource<User>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -85,12 +91,6 @@ export class UserListComponent implements OnInit, OnDestroy {
     status: 'status',
     createdAt: 'createdAt',
   };
-
-  roles = [
-    { id: 2, name: 'Admin' },
-    { id: 3, name: 'Manager' },
-    { id: 4, name: 'User' },
-  ];
 
   displayedPages = computed(() => {
     const total = this.pagination().totalPages;
@@ -238,9 +238,8 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   getRoleName(roleId: number | undefined): string {
-    if (!roleId) return 'User';
-    const role = this.roles.find((r) => r.id === roleId);
-    return role ? role.name : 'User';
+    const normalizedRole = normalizeRole(undefined, roleId);
+    return getRoleLabel(normalizedRole);
   }
 
   getSortIcon(field: string): string {

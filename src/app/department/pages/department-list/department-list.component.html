@@ -7,7 +7,7 @@
       </h2>
     </div>
     <div class="col-auto">
-      <button class="btn btn-primary" (click)="navigateToAdd()">
+      <button *appHasPermission="'create'" class="btn btn-primary" (click)="navigateToAdd()">
         <i class="fas fa-plus me-2"></i>
         Add Department
       </button>

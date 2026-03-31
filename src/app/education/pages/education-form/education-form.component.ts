@@ -139,7 +139,7 @@ export class EducationFormComponent implements OnInit, OnDestroy {
           this.isSubmitting.set(false);
           if (response.success) {
             this.toasterService.success('Success', 'Education updated successfully');
-            this.router.navigate(['/education/list']);
+            this.router.navigate(['/educations/list']);
           } else {
             this.handleError(response);
           }
@@ -157,7 +157,7 @@ export class EducationFormComponent implements OnInit, OnDestroy {
           this.isSubmitting.set(false);
           if (response.success) {
             this.toasterService.success('Success', 'Education created successfully');
-            this.router.navigate(['/education/list']);
+            this.router.navigate(['/educations/list']);
           } else {
             this.handleError(response);
           }
@@ -173,7 +173,7 @@ export class EducationFormComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
-    this.router.navigate(['/education/list']);
+    this.router.navigate(['/educations/list']);
   }
 
   private handleError(error: any): void {

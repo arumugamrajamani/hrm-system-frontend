@@ -91,3 +91,5 @@ export interface ModalConfig {
   onConfirm?: () => void;
   onCancel?: () => void;
 }
+
+export * from './rbac.models';

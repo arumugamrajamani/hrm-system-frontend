@@ -5,3 +5,4 @@ export * from './components/dropdown/dropdown.component';
 export * from './components/avatar/avatar.component';
 export * from './pipes/password-strength.pipe';
 export * from './directives/focus.directive';
+export * from './directives/has-permission.directive';

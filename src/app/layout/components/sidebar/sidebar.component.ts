@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   signal,
+  computed,
   Output,
   EventEmitter,
   Input,
@@ -12,19 +13,11 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../core/services';
+import { AuthService, RbacService } from '../../../core/services';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { UserApiService } from '../../../user-management/services';
 import { User } from '../../../core/models';
-import { Department } from '../../../department';
-
-interface MenuItem {
-  label: string;
-  icon: string;
-  route?: string;
-  permission?: string;
-  children?: MenuItem[];
-}
+import { APP_NAVIGATION_ITEMS } from '../../../core/config/navigation.config';
 
 @Component({
   selector: 'app-sidebar',
@@ -41,6 +34,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
+  private rbacService = inject(RbacService);
   private userApi = inject(UserApiService);
   private router = inject(Router);
 
@@ -49,21 +43,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isUserMenuOpen = signal(false);
   expandedMenus = signal<Set<string>>(new Set(['Masters']));
 
-  menuItems: MenuItem[] = [
-    { label: 'Dashboard', icon: 'fa-th-large', route: '/dashboard' },
-    { label: 'Users', icon: 'fa-users', route: '/user-management', permission: 'users.read' },
-    {
-      label: 'Masters',
-      icon: 'fa-folder-open',
-      children: [
-        { label: 'Departments', icon: 'fa-building', route: '/department' },
-        { label: 'Educations', icon: 'fa-graduation-cap', route: '/educations' },
-        { label: 'Courses', icon: 'fa-book', route: '/courses' },
-        { label: 'Education-Course Mapping', icon: 'fa-link', route: '/education-course-mapping' },
-      ],
-    },
-    { label: 'Settings', icon: 'fa-cog', route: '/settings' },
-  ];
+  readonly menuItems = computed(() => this.rbacService.filterMenuByPermission(APP_NAVIGATION_ITEMS));
 
   ngOnInit(): void {
     this.isCollapsedState.set(this.isCollapsed);
@@ -121,11 +101,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   isActive(route: string): boolean {
     return this.router.url.startsWith(route);
-  }
-
-  hasAccess(permission?: string): boolean {
-    if (!permission) return true;
-    return this.authService.hasPermission(permission);
   }
 
   getProfilePhoto(): string | null {

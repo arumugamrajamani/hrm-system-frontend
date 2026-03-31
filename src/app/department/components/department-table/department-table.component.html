@@ -39,10 +39,10 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Actions</th>
       <td mat-cell *matCellDef="let dept">
-        <button class="btn btn-sm btn-primary me-2" (click)="onEdit(dept)" title="Edit">
+        <button *appHasPermission="'edit'" class="btn btn-sm btn-primary me-2" (click)="onEdit(dept)" title="Edit">
           <i class="fas fa-pencil-alt"></i>
         </button>
-        <button class="btn btn-sm btn-danger" (click)="onDelete(dept)" title="Delete">
+        <button *appHasPermission="'delete'" class="btn btn-sm btn-danger" (click)="onDelete(dept)" title="Delete">
           <i class="fas fa-trash"></i>
         </button>
       </td>
