@@ -3,6 +3,8 @@ export const environment = {
   apiUrl: 'http://localhost:3000/api/v1',
   usersApiUrl: 'http://localhost:3000/api/v1/users',
   departmentsApiUrl: 'http://localhost:3000/api/v1/departments',
+  locationsApiUrl: 'http://localhost:3000/api/v1/locations',
+  designationsApiUrl: 'http://localhost:3000/api/v1/designations',
   uploadsUrl: '/uploads',
   tokenKey: 'hrm_token',
   refreshTokenKey: 'hrm_refresh_token',

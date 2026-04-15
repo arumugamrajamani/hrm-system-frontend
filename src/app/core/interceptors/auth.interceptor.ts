@@ -60,7 +60,7 @@ export class AuthInterceptor implements HttpInterceptor {
         showToast = false;
         break;
       case 500:
-        errorMessage = 'Server error. Please try again later.';
+        errorMessage = 'Internal Server error. Please try again later.';
         break;
       case 0:
         errorMessage = 'Network error. Please check your connection.';

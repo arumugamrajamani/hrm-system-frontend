@@ -108,4 +108,22 @@ export class DepartmentApiService {
   deactivateDepartment(id: number): Observable<ApiResponse<Department>> {
     return this.http.patch<ApiResponse<Department>>(`${this.apiUrl}/${id}/deactivate`, {});
   }
+
+  /**
+   * GET /api/departments/:id/full-path
+   * Get full path from root to department
+   * Returns array of ancestors ending with the department
+   */
+  getFullPath(id: number): Observable<ApiResponse<Department[]>> {
+    return this.http.get<ApiResponse<Department[]>>(`${this.apiUrl}/${id}/full-path`);
+  }
+
+  /**
+   * GET /api/departments/:id/tree
+   * Get full subtree under department (including the department itself)
+   * Returns nested tree structure
+   */
+  getDepartmentTree(id: number): Observable<ApiResponse<DepartmentHierarchyResponse>> {
+    return this.http.get<ApiResponse<DepartmentHierarchyResponse>>(`${this.apiUrl}/${id}/tree`);
+  }
 }

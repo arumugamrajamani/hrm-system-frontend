@@ -51,6 +51,40 @@ const routes: Routes = [
             (m) => m.EducationCourseMappingModule,
           ),
       },
+      {
+        path: 'masters',
+        loadChildren: () =>
+          import('./features/masters/masters.module').then((m) => m.MastersModule),
+      },
+      {
+        path: 'employees',
+        loadChildren: () =>
+          import('./features/employee/employee.module').then((m) => m.EmployeeModule),
+      },
+      {
+        path: 'leave',
+        loadChildren: () => import('./features/leave/leave.module').then((m) => m.LeaveModule),
+      },
+      {
+        path: 'timesheet',
+        loadChildren: () =>
+          import('./features/timesheet/timesheet.module').then((m) => m.TimesheetModule),
+      },
+      {
+        path: 'attendance',
+        loadChildren: () =>
+          import('./features/attendance/attendance.module').then((m) => m.AttendanceModule),
+      },
+      {
+        path: 'payroll',
+        loadChildren: () =>
+          import('./features/payroll/payroll.module').then((m) => m.PayrollModule),
+      },
+      {
+        path: 'reports',
+        loadChildren: () =>
+          import('./features/reports/reports.module').then((m) => m.ReportsModule),
+      },
     ],
   },
   {

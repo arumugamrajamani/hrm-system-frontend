@@ -286,4 +286,23 @@ export class DepartmentService {
   invalidateCache(): void {
     this.clearCache();
   }
+
+  getFullPath(id: number): Observable<Department[]> {
+    return this.apiService.getFullPath(id).pipe(
+      map((response) => (response.success ? response.data! : [])),
+      catchError(() => of([])),
+    );
+  }
+
+  getDepartmentTree(id: number): Observable<DepartmentNode | null> {
+    return this.apiService.getDepartmentTree(id).pipe(
+      map((response) => {
+        if (response.success && response.data) {
+          return this.mapHierarchyNode(response.data);
+        }
+        return null;
+      }),
+      catchError(() => of(null)),
+    );
+  }
 }
