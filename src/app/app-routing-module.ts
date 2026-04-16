@@ -32,26 +32,6 @@ const routes: Routes = [
         loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule),
       },
       {
-        path: 'department',
-        loadChildren: () =>
-          import('./department/department.module').then((m) => m.DepartmentModule),
-      },
-      {
-        path: 'educations',
-        loadChildren: () => import('./education/education.module').then((m) => m.EducationModule),
-      },
-      {
-        path: 'courses',
-        loadChildren: () => import('./course/course.module').then((m) => m.CourseModule),
-      },
-      {
-        path: 'education-course-mapping',
-        loadChildren: () =>
-          import('./education-course-mapping/education-course-mapping.module').then(
-            (m) => m.EducationCourseMappingModule,
-          ),
-      },
-      {
         path: 'masters',
         loadChildren: () =>
           import('./features/masters/masters.module').then((m) => m.MastersModule),
@@ -84,6 +64,13 @@ const routes: Routes = [
         path: 'reports',
         loadChildren: () =>
           import('./features/reports/reports.module').then((m) => m.ReportsModule),
+      },
+      {
+        path: 'notifications',
+        loadChildren: () =>
+          import('./shared/pages/notifications/notifications-page.module').then(
+            (m) => m.NotificationsPageModule,
+          ),
       },
     ],
   },

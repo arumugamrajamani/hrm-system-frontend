@@ -258,6 +258,13 @@ export class LocationStore {
     );
   }
 
+  toggleStatus(id: number): Observable<any> {
+    const loc = this._locations().find((d) => d.id === id);
+    if (!loc) return of({ success: false, message: 'Location not found' });
+
+    return loc.status === 'active' ? this.deactivate(id) : this.activate(id);
+  }
+
   setHeadquarters(id: number): Observable<any> {
     this._loading.set(true);
     return this.api.setHeadquarters(id).pipe(

@@ -13,7 +13,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DesignationStore } from '../../services/designation.store';
 import { Designation } from '../../models/designation.model';
 import { Permission } from '../../../../../core/models/rbac.models';
-import { ToasterService } from '../../../../../core/services';
+import { ToasterService, ModalService } from '../../../../../core/services';
 
 @Component({
   selector: 'app-designation-list',
@@ -137,7 +137,7 @@ import { ToasterService } from '../../../../../core/services';
         </div>
       } @else if (viewMode() === 'table') {
         <div class="card shadow-sm">
-          <div class="card-body">
+          <div class="card-body pt-0">
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead class="table-light">
@@ -181,35 +181,37 @@ import { ToasterService } from '../../../../../core/services';
                         }
                       </td>
                       <td>
-                        <div class="btn-group btn-group-sm">
-                          @if (store.canEdit()) {
-                            <button
-                              class="btn btn-outline-primary"
-                              (click)="navigateToEdit(des)"
-                              title="Edit"
-                            >
-                              <i class="fas fa-pencil-alt"></i>
-                            </button>
+                        @if (store.canEdit()) {
+                          <button
+                            class="btn-action btn-edit me-1"
+                            (click)="navigateToEdit(des)"
+                            title="Edit"
+                          >
+                            <i class="fas fa-pencil-alt"></i>
+                          </button>
+                        }
+                        <button
+                          class="btn-action me-1"
+                          [class.btn-toggle-active]="des.status === 'active'"
+                          [class.btn-toggle-inactive]="des.status === 'inactive'"
+                          (click)="onToggleStatus(des)"
+                          [title]="des.status === 'active' ? 'Deactivate' : 'Activate'"
+                        >
+                          @if (des.status === 'active') {
+                            <i class="fas fa-ban"></i>
+                          } @else {
+                            <i class="fas fa-check"></i>
                           }
-                          @if (store.canDelete()) {
-                            <button
-                              class="btn btn-outline-danger"
-                              (click)="onDelete(des)"
-                              title="Delete"
-                            >
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          }
-                          @if (des.status === 'inactive' && store.canEdit()) {
-                            <button
-                              class="btn btn-outline-success"
-                              (click)="onActivate(des)"
-                              title="Activate"
-                            >
-                              <i class="fas fa-check"></i>
-                            </button>
-                          }
-                        </div>
+                        </button>
+                        @if (store.canDelete()) {
+                          <button
+                            class="btn-action btn-delete ms-1"
+                            (click)="onDelete(des)"
+                            title="Delete"
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        }
                       </td>
                     </tr>
                   }
@@ -364,38 +366,12 @@ import { ToasterService } from '../../../../../core/services';
       }
     </div>
   `,
-  styles: [
-    `
-      .page-title {
-        font-weight: 600;
-        color: #2c3e50;
-      }
-      .designation-card {
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-      }
-      .designation-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-      }
-      .designation-card.inactive {
-        opacity: 0.7;
-      }
-      .sortable {
-        cursor: pointer;
-        user-select: none;
-      }
-      .sortable:hover {
-        color: #0d6efd;
-      }
-    `,
-  ],
 })
 export class DesignationListComponent implements OnInit {
   readonly store = inject(DesignationStore);
   private router = inject(Router);
   private toasterService = inject(ToasterService);
+  private modalService = inject(ModalService);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
@@ -504,7 +480,7 @@ export class DesignationListComponent implements OnInit {
   }
 
   async onDelete(des: Designation): Promise<void> {
-    const confirmed = await this.showConfirmDialog(
+    const confirmed = await this.modalService.confirm(
       'Delete Designation',
       `Are you sure you want to delete "${des.name}"? This action cannot be undone.`,
     );
@@ -522,6 +498,38 @@ export class DesignationListComponent implements OnInit {
         },
         error: (err) => {
           this.toasterService.error('Error', err.error?.message || 'Failed to delete designation');
+          this.cdr.markForCheck();
+        },
+      });
+    }
+  }
+
+  async onToggleStatus(des: Designation): Promise<void> {
+    const action = des.status === 'active' ? 'deactivate' : 'activate';
+    const confirmed = await this.modalService.confirm(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} Designation`,
+      `Are you sure you want to ${action} "${des.name}"?`,
+    );
+
+    if (confirmed) {
+      this.store.toggleStatus(des.id).subscribe({
+        next: (response) => {
+          if (response?.success) {
+            this.toasterService.success('Success', `Designation ${action}d successfully`);
+            this.loadData();
+          } else {
+            this.toasterService.error(
+              'Error',
+              response?.message || `Failed to ${action} designation`,
+            );
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.toasterService.error(
+            'Error',
+            err.error?.message || `Failed to ${action} designation`,
+          );
           this.cdr.markForCheck();
         },
       });

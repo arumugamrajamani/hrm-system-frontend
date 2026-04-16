@@ -13,7 +13,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { LocationStore } from '../../services/location.store';
 import { Location, LocationTree } from '../../models/location.model';
 import { Permission } from '../../../../../core/models/rbac.models';
-import { ToasterService } from '../../../../../core/services';
+import { ToasterService, ModalService } from '../../../../../core/services';
 
 @Component({
   selector: 'app-location-list',
@@ -162,7 +162,7 @@ import { ToasterService } from '../../../../../core/services';
         </div>
       } @else if (viewMode() === 'table') {
         <div class="card shadow-sm">
-          <div class="card-body">
+          <div class="card-body pt-0">
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead class="table-light">
@@ -216,35 +216,37 @@ import { ToasterService } from '../../../../../core/services';
                         }
                       </td>
                       <td>
-                        <div class="btn-group btn-group-sm">
-                          @if (store.canEdit()) {
-                            <button
-                              class="btn btn-outline-primary"
-                              (click)="navigateToEdit(loc)"
-                              title="Edit"
-                            >
-                              <i class="fas fa-pencil-alt"></i>
-                            </button>
+                        @if (store.canEdit()) {
+                          <button
+                            class="btn-action btn-edit me-1"
+                            (click)="navigateToEdit(loc)"
+                            title="Edit"
+                          >
+                            <i class="fas fa-pencil-alt"></i>
+                          </button>
+                        }
+                        <button
+                          class="btn-action me-1"
+                          [class.btn-toggle-active]="loc.status === 'active'"
+                          [class.btn-toggle-inactive]="loc.status === 'inactive'"
+                          (click)="onToggleStatus(loc)"
+                          [title]="loc.status === 'active' ? 'Deactivate' : 'Activate'"
+                        >
+                          @if (loc.status === 'active') {
+                            <i class="fas fa-ban"></i>
+                          } @else {
+                            <i class="fas fa-check"></i>
                           }
-                          @if (store.canDelete()) {
-                            <button
-                              class="btn btn-outline-danger"
-                              (click)="onDelete(loc)"
-                              title="Delete"
-                            >
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          }
-                          @if (!loc.isHeadquarters && loc.status === 'active') {
-                            <button
-                              class="btn btn-outline-warning"
-                              (click)="onSetHQ(loc)"
-                              title="Set as Headquarters"
-                            >
-                              <i class="fas fa-star"></i>
-                            </button>
-                          }
-                        </div>
+                        </button>
+                        @if (store.canDelete()) {
+                          <button
+                            class="btn-action btn-delete ms-1"
+                            (click)="onDelete(loc)"
+                            title="Delete"
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        }
                       </td>
                     </tr>
                   } @empty {
@@ -514,59 +516,12 @@ import { ToasterService } from '../../../../../core/services';
       </div>
     </ng-template>
   `,
-  styles: [
-    `
-      .page-title {
-        font-weight: 600;
-        color: #2c3e50;
-      }
-      .location-card {
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-      }
-      .location-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-      }
-      .location-card.inactive {
-        opacity: 0.7;
-      }
-      .tree-view {
-        padding: 1rem 0;
-      }
-      .tree-item {
-        margin-bottom: 0.25rem;
-      }
-      .tree-node {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      .tree-node:hover {
-        background-color: #f8f9fa;
-      }
-      .tree-label {
-        font-weight: 500;
-        margin-left: 0.5rem;
-      }
-      .sortable {
-        cursor: pointer;
-        user-select: none;
-      }
-      .sortable:hover {
-        color: #0d6efd;
-      }
-    `,
-  ],
 })
 export class LocationListComponent implements OnInit {
   readonly store = inject(LocationStore);
   private router = inject(Router);
   private toasterService = inject(ToasterService);
+  private modalService = inject(ModalService);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
@@ -709,8 +664,34 @@ export class LocationListComponent implements OnInit {
     this.router.navigate(['/masters/locations/edit', loc.id]);
   }
 
+  async onToggleStatus(loc: Location): Promise<void> {
+    const action = loc.status === 'active' ? 'deactivate' : 'activate';
+    const confirmed = await this.modalService.confirm(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} Location`,
+      `Are you sure you want to ${action} "${loc.name}"?`,
+    );
+
+    if (confirmed) {
+      this.store.toggleStatus(loc.id).subscribe({
+        next: (response) => {
+          if (response?.success) {
+            this.toasterService.success('Success', `Location ${action}d successfully`);
+            this.loadData();
+          } else {
+            this.toasterService.error('Error', response?.message || `Failed to ${action} location`);
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.toasterService.error('Error', err.error?.message || `Failed to ${action} location`);
+          this.cdr.markForCheck();
+        },
+      });
+    }
+  }
+
   async onDelete(loc: Location): Promise<void> {
-    const confirmed = await this.showConfirmDialog(
+    const confirmed = await this.modalService.confirm(
       'Delete Location',
       `Are you sure you want to delete "${loc.name}"? This action cannot be undone.`,
     );
@@ -735,7 +716,7 @@ export class LocationListComponent implements OnInit {
   }
 
   async onSetHQ(loc: Location): Promise<void> {
-    const confirmed = await this.showConfirmDialog(
+    const confirmed = await this.modalService.confirm(
       'Set as Headquarters',
       `Set "${loc.name}" as the company headquarters?`,
     );

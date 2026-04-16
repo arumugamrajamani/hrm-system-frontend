@@ -6,6 +6,9 @@ import { PayrollListComponent } from './pages/payroll-list/payroll-list.componen
 import { PayrollRunComponent } from './pages/payroll-run/payroll-run.component';
 import { PermissionGuard } from '../../core/guards';
 import { Permission } from '../../core/models/rbac.models';
+import { SharedModule } from '../../shared/shared.module';
+import { LoadingSkeletonComponent } from '../../shared/components/loading-skeleton/loading-skeleton.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 
 const routes: Routes = [
   {
@@ -30,6 +33,13 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [PayrollListComponent, PayrollRunComponent],
-  imports: [CommonModule, RouterModule.forChild(routes), FormsModule],
+  imports: [
+    CommonModule,
+    RouterModule.forChild(routes),
+    FormsModule,
+    SharedModule,
+    LoadingSkeletonComponent,
+    EmptyStateComponent,
+  ],
 })
 export class PayrollModule {}

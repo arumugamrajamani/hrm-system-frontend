@@ -235,6 +235,13 @@ export class DesignationStore {
     );
   }
 
+  toggleStatus(id: number): Observable<any> {
+    const des = this._designations().find((d) => d.id === id);
+    if (!des) return of({ success: false, message: 'Designation not found' });
+
+    return des.status === 'active' ? this.deactivate(id) : this.activate(id);
+  }
+
   generateCode(prefix?: string): Observable<any> {
     return this.api.generateCode(prefix);
   }

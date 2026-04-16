@@ -23,6 +23,21 @@ const routes: Routes = [
         path: 'locations',
         loadChildren: () => import('./location/location.module').then((m) => m.LocationModule),
       },
+      {
+        path: 'educations',
+        loadChildren: () => import('./education/education.module').then((m) => m.EducationModule),
+      },
+      {
+        path: 'courses',
+        loadChildren: () => import('./course/course.module').then((m) => m.CourseModule),
+      },
+      {
+        path: 'education-course-mapping',
+        loadChildren: () =>
+          import('./education-course-mapping/education-course-mapping.module').then(
+            (m) => m.EducationCourseMappingModule,
+          ),
+      },
       { path: '', redirectTo: 'departments', pathMatch: 'full' },
     ],
   },

@@ -1,11 +1,16 @@
-import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { DepartmentStore } from '../../services/department.store';
 import { Department } from '../../models/department.model';
 import { Permission } from '../../../../../core/models/rbac.models';
+import { LoadingSkeletonComponent } from '../../../../../shared/components/loading-skeleton/loading-skeleton.component';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { ToasterService, ModalService } from '../../../../../core/services';
 
 @Component({
   selector: 'app-department-list',
@@ -87,152 +92,134 @@ import { Permission } from '../../../../../core/models/rbac.models';
       </div>
 
       @if (store.loading()) {
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+        <div class="card shadow-sm">
+          <div class="card-body">
+            @for (row of skeletonRows; track $index) {
+              <app-loading-skeleton
+                type="table-row"
+                [columns]="['200px', '100px', '150px', '120px', '80px', '100px']"
+              ></app-loading-skeleton>
+            }
           </div>
-          <p class="mt-3 text-muted">Loading departments...</p>
         </div>
       } @else if (store.error()) {
         <div class="alert alert-danger" role="alert">
           <i class="fas fa-exclamation-triangle me-2"></i>
           {{ store.error() }}
-          <button class="btn btn-sm btn-outline-danger ms-3" (click)="store.loadDepartments()">
-            Retry
-          </button>
+          <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
         </div>
       } @else if (viewMode() === 'table') {
-        <!-- Debug Info -->
-        <div class="alert alert-secondary small mb-3">
-          <strong>Debug:</strong> Loading: {{ store.loading() }}, Depts:
-          {{ store.departments().length }}, Page: {{ store.pagination().page }}, Total:
-          {{ store.pagination().total }}
-          <button class="btn btn-sm btn-outline-primary ms-2" (click)="reload()">Reload</button>
-        </div>
         <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Department Name</th>
-                    <th>Code</th>
-                    <th>Parent Department</th>
-                    <th>Department Head</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (dept of store.departments(); track dept.id) {
-                    <tr>
-                      <td>{{ dept.name }}</td>
-                      <td>
-                        <span class="badge bg-secondary">{{ dept.code }}</span>
-                      </td>
-                      <td>{{ dept.parentName || '-' }}</td>
-                      <td>{{ dept.headName || '-' }}</td>
-                      <td>
-                        @if (dept.status === 'active') {
-                          <span class="badge bg-success">Active</span>
-                        } @else {
-                          <span class="badge bg-danger">Inactive</span>
-                        }
-                      </td>
-                      <td>
-                        @if (store.canEdit()) {
-                          <button
-                            class="btn btn-sm btn-primary me-2"
-                            (click)="navigateToEdit(dept)"
-                            title="Edit"
-                          >
-                            <i class="fas fa-pencil-alt"></i>
-                          </button>
-                        }
-                        @if (store.canDelete()) {
-                          <button
-                            class="btn btn-sm btn-danger"
-                            (click)="onDelete(dept)"
-                            title="Delete"
-                          >
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        }
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="6" class="text-center py-4">
-                        <div class="text-muted">
-                          <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                          No departments found
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+          <div class="card-body pt-0">
+            @if (store.departments().length === 0) {
+              <app-empty-state
+                icon="business"
+                title="No Departments Found"
+                message="Get started by creating your first department."
+                actionLabel="Add Department"
+                actionIcon="add"
+                (action)="navigateToAdd()"
+              ></app-empty-state>
+            } @else {
+              <div class="table-responsive">
+                <table mat-table [dataSource]="dataSource" class="table table-hover">
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef>Department Name</th>
+                    <td mat-cell *matCellDef="let dept">{{ dept.name }}</td>
+                  </ng-container>
 
-            @if (store.pagination().total > 0) {
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="text-muted">Show</span>
-                  <select
-                    class="form-select form-select-sm"
-                    style="width: auto;"
-                    [ngModel]="store.pagination().limit"
-                    (ngModelChange)="onPageSizeChange($event)"
-                  >
-                    <option [ngValue]="10">10</option>
-                    <option [ngValue]="25">25</option>
-                    <option [ngValue]="50">50</option>
-                    <option [ngValue]="100">100</option>
-                  </select>
-                  <span class="text-muted">entries</span>
-                  <span class="text-muted ms-2">
-                    ({{ (store.pagination().page - 1) * store.pagination().limit + 1 }}-{{
-                      Math.min(
-                        store.pagination().page * store.pagination().limit,
-                        store.pagination().total
-                      )
-                    }}
-                    of {{ store.pagination().total }})
-                  </span>
-                </div>
-                <nav>
-                  <ul class="pagination mb-0">
-                    <li class="page-item" [class.disabled]="store.pagination().page === 1">
-                      <a
-                        class="page-link"
-                        href="javascript:void(0)"
-                        (click)="onPageChange(store.pagination().page - 1)"
+                  <ng-container matColumnDef="code">
+                    <th mat-header-cell *matHeaderCellDef>Code</th>
+                    <td mat-cell *matCellDef="let dept">
+                      <span class="badge bg-secondary">{{ dept.code }}</span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="parentName">
+                    <th mat-header-cell *matHeaderCellDef>Parent Department</th>
+                    <td mat-cell *matCellDef="let dept">{{ dept.parentName || '-' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="headName">
+                    <th mat-header-cell *matHeaderCellDef>Department Head</th>
+                    <td mat-cell *matCellDef="let dept">{{ dept.headName || '-' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let dept">
+                      @if (dept.status === 'active') {
+                        <span class="badge bg-success">Active</span>
+                      } @else {
+                        <span class="badge bg-danger">Inactive</span>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let dept">
+                      @if (store.canEdit()) {
+                        <button
+                          class="btn-action btn-edit me-1"
+                          (click)="navigateToEdit(dept)"
+                          title="Edit"
+                        >
+                          <i class="fas fa-pencil-alt"></i>
+                        </button>
+                      }
+                      <button
+                        class="btn-action me-1"
+                        [class.btn-toggle-active]="dept.status === 'active'"
+                        [class.btn-toggle-inactive]="dept.status === 'inactive'"
+                        (click)="onToggleStatus(dept)"
+                        [title]="dept.status === 'active' ? 'Deactivate' : 'Activate'"
                       >
-                        Previous
-                      </a>
-                    </li>
-                    @for (page of getVisiblePages(); track page) {
-                      <li class="page-item" [class.active]="page === store.pagination().page">
-                        <a class="page-link" href="javascript:void(0)" (click)="onPageChange(page)">
-                          {{ page }}
-                        </a>
-                      </li>
-                    }
-                    <li
-                      class="page-item"
-                      [class.disabled]="store.pagination().page === store.pagination().totalPages"
-                    >
-                      <a
-                        class="page-link"
-                        href="javascript:void(0)"
-                        (click)="onPageChange(store.pagination().page + 1)"
-                      >
-                        Next
-                      </a>
-                    </li>
-                  </ul>
-                </nav>
+                        @if (dept.status === 'active') {
+                          <i class="fas fa-ban"></i>
+                        } @else {
+                          <i class="fas fa-check"></i>
+                        }
+                      </button>
+                      @if (store.canDelete()) {
+                        <button
+                          class="btn-action btn-delete ms-1"
+                          (click)="onDelete(dept)"
+                          title="Delete"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+                  <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell text-center py-4" [attr.colspan]="displayedColumns.length">
+                      <app-empty-state
+                        icon="business"
+                        title="No Departments Found"
+                        message="Get started by creating your first department."
+                        actionLabel="Add Department"
+                        actionIcon="add"
+                        (action)="navigateToAdd()"
+                      ></app-empty-state>
+                    </td>
+                  </tr>
+                </table>
               </div>
+
+              <mat-paginator
+                [pageSizeOptions]="[10, 25, 50, 100]"
+                [pageSize]="store.pagination().limit"
+                [length]="store.pagination().total"
+                [pageIndex]="store.pagination().page - 1"
+                (page)="onPageChange($event.pageIndex + 1); onPageSizeChange($event.pageSize)"
+                showFirstLastButtons
+              >
+              </mat-paginator>
             }
           </div>
         </div>
@@ -245,8 +232,11 @@ import { Permission } from '../../../../../core/models/rbac.models';
             </h5>
           </div>
           <div class="card-body">
-            <!-- Tree view component would go here -->
-            <div class="text-muted">Tree view coming soon...</div>
+            <app-empty-state
+              icon="account_tree"
+              title="Tree View Coming Soon"
+              message="The hierarchical view of departments will be available soon."
+            ></app-empty-state>
           </div>
         </div>
       }
@@ -256,22 +246,38 @@ import { Permission } from '../../../../../core/models/rbac.models';
 export class DepartmentListComponent implements OnInit {
   readonly store = inject(DepartmentStore);
   readonly Math = Math;
-  private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
+  private toasterService = inject(ToasterService);
+  private modalService = inject(ModalService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+
+  private paginator?: MatPaginator;
+
+  @ViewChild(MatPaginator)
+  set matPaginator(paginator: MatPaginator | undefined) {
+    if (!paginator) return;
+    this.paginator = paginator;
+  }
+
+  displayedColumns = ['name', 'code', 'parentName', 'headName', 'status', 'actions'];
+  dataSource = new MatTableDataSource<Department>([]);
 
   searchTerm = signal<string>('');
   statusFilter = signal<string>('');
   viewMode = signal<'table' | 'tree'>('table');
+  skeletonRows = Array(5).fill(0);
 
   readonly Permission = Permission;
 
   ngOnInit(): void {
     this.store.loadDepartments();
     this.setupSearchDebounce();
+    this.loadDataSource();
+  }
 
-    this.store.departments;
+  private loadDataSource(): void {
+    this.dataSource.data = this.store.departments();
   }
 
   private setupSearchDebounce(): void {
@@ -339,12 +345,45 @@ export class DepartmentListComponent implements OnInit {
     this.router.navigate(['/masters/departments/edit', dept.id]);
   }
 
+  async onToggleStatus(dept: Department): Promise<void> {
+    const action = dept.status === 'active' ? 'deactivate' : 'activate';
+    const confirmed = await this.modalService.confirm(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} Department`,
+      `Are you sure you want to ${action} "${dept.name}"?`,
+    );
+
+    if (confirmed) {
+      this.store.toggleStatus(dept.id).subscribe({
+        next: (response) => {
+          if (response?.success) {
+            this.toasterService.success('Success', `Department ${action}d successfully`);
+            this.store.loadDepartments();
+          } else {
+            this.toasterService.error(
+              'Error',
+              response?.message || `Failed to ${action} department`,
+            );
+          }
+        },
+      });
+    }
+  }
+
   async onDelete(dept: Department): Promise<void> {
-    const confirmed = confirm(`Are you sure you want to delete "${dept.name}"?`);
+    const confirmed = await this.modalService.confirm(
+      'Delete Department',
+      `Are you sure you want to delete "${dept.name}"? This action cannot be undone.`,
+    );
+
     if (confirmed) {
       this.store.delete(dept.id).subscribe({
-        next: () => {
-          this.store.loadDepartments();
+        next: (response) => {
+          if (response?.success) {
+            this.toasterService.success('Success', 'Department deleted successfully');
+            this.store.loadDepartments();
+          } else {
+            this.toasterService.error('Error', response?.message || 'Failed to delete department');
+          }
         },
       });
     }

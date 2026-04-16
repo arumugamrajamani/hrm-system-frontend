@@ -24,6 +24,12 @@ export const APP_NAVIGATION_ITEMS: MenuItemConfig[] = [
         permissions: [Permission.READ],
       },
       {
+        label: 'Kanban Board',
+        icon: 'fa-columns',
+        route: '/leave/kanban',
+        permissions: [Permission.READ],
+      },
+      {
         label: 'Leave Balances',
         icon: 'fa-coins',
         route: '/leave/balances',
@@ -92,19 +98,19 @@ export const APP_NAVIGATION_ITEMS: MenuItemConfig[] = [
       {
         label: 'Educations',
         icon: 'fa-graduation-cap',
-        route: '/educations',
+        route: '/masters/educations',
         permissions: [Permission.READ],
       },
       {
         label: 'Courses',
         icon: 'fa-book',
-        route: '/courses',
+        route: '/masters/courses',
         permissions: [Permission.READ],
       },
       {
         label: 'Education-Course Mapping',
         icon: 'fa-link',
-        route: '/education-course-mapping',
+        route: '/masters/education-course-mapping',
         permissions: [Permission.READ],
       },
     ],

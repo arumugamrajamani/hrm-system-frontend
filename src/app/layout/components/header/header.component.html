@@ -15,10 +15,22 @@
       <span>{{ formattedDate }}</span>
     </div>
 
-    <button class="btn-icon" title="Notifications">
-      <i class="fas fa-bell"></i>
-      <span class="badge">3</span>
+    <button
+      class="btn-icon command-trigger"
+      title="Search & Commands (Ctrl+K)"
+      (click)="openCommandPalette()"
+    >
+      <i class="fas fa-search"></i>
+      <kbd class="shortcut-badge">Ctrl+K</kbd>
     </button>
+
+    <app-notification-center
+      (notificationClick)="onNotificationClick($event)"
+      (viewAllClick)="onViewAllNotifications()"
+    ></app-notification-center>
+
+    <app-theme-toggle></app-theme-toggle>
+    <app-accessibility-menu></app-accessibility-menu>
 
     <button class="btn-icon" title="Help">
       <i class="fas fa-question-circle"></i>

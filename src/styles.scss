@@ -32,6 +32,45 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
   --transition-slow: 0.35s ease;
+
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --selected-bg: #e3f2fd;
+  --scrollbar-track: var(--bg-secondary);
+  --scrollbar-thumb: var(--border-color);
+  --card-bg: var(--bg-primary);
+  --modal-bg: var(--bg-primary);
+  --input-bg: var(--bg-primary);
+  --header-bg: #f5f5f5;
+  --row-hover: #fafafa;
+}
+
+html.dark-theme,
+.dark-theme {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #121212;
+  --bg-tertiary: #2d2d2d;
+  --border-color: #333333;
+  --border-light: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-muted: #808080;
+  --hover-bg: rgba(255, 255, 255, 0.08);
+  --selected-bg: #1a237e;
+  --scrollbar-track: var(--bg-secondary);
+  --scrollbar-thumb: #555555;
+  --card-bg: #252525;
+  --modal-bg: #1e1e1e;
+  --input-bg: #2d2d2d;
+  --header-bg: #252525;
+  --row-hover: #2a2a2a;
+
+  --primary-color: #818cf8;
+  --primary-light: #a5b4fc;
+  --primary-dark: #6366f1;
+  --success-color: #34d399;
+  --danger-color: #f87171;
+  --warning-color: #fbbf24;
+  --info-color: #22d3ee;
 }
 
 * {
@@ -56,6 +95,9 @@ body {
   background: var(--bg-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
 }
 
 a {
@@ -79,11 +121,11 @@ textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
@@ -155,7 +197,7 @@ h6 {
   color: var(--text-primary);
 
   &:hover:not(:disabled) {
-    background: var(--bg-secondary);
+    background: var(--hover-bg);
     border-color: var(--text-muted);
   }
 }
@@ -184,10 +226,13 @@ h6 {
 }
 
 .card {
-  background: var(--bg-primary);
+  background: var(--card-bg);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  transition:
+    background-color var(--transition-normal),
+    border-color var(--transition-normal);
 }
 
 .grid {
@@ -301,6 +346,19 @@ h6 {
   gap: 24px;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-theme) {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #121212;
+    --bg-tertiary: #2d2d2d;
+    --border-color: #333333;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --hover-bg: rgba(255, 255, 255, 0.08);
+    --card-bg: #252525;
+  }
+}
+
 @media (max-width: 992px) {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
@@ -316,5 +374,364 @@ h6 {
   .grid-3,
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--primary-color);
+  color: white;
+}
+
+// ============================================================
+// LIST PAGE COMMON STYLES
+// Consistent styling for all list pages (education, masters, etc.)
+// ============================================================
+
+// ----------------------------------------------------------
+// Page Title
+// Main heading for list pages
+// ----------------------------------------------------------
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0;
+  line-height: 1.3;
+}
+
+// ----------------------------------------------------------
+// Card Component
+// Container for tables and content
+// ----------------------------------------------------------
+.card {
+  background: var(--card-bg);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  .card-body {
+    padding: 1.25rem;
+
+    &.pt-0 {
+      padding-top: 0;
+    }
+  }
+}
+
+// ----------------------------------------------------------
+// Table Styles
+// Consistent table appearance across all list pages
+// ----------------------------------------------------------
+.table-responsive {
+  overflow-x: auto;
+  margin: 0 -1.25rem;
+  padding-top: 0;
+}
+
+.table {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  width: 100%;
+
+  // Table Header - Attractive gradient background
+  thead th {
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-bottom: none;
+    padding: 14px 16px;
+    white-space: nowrap;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  // Table Body
+  tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  // Row Hover Effect
+  tbody tr {
+    transition: background-color var(--transition-fast);
+
+    &:hover {
+      background-color: var(--hover-bg);
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+// ----------------------------------------------------------
+// Material Table Overrides
+// ----------------------------------------------------------
+.mat-mdc-table {
+  width: 100%;
+  background: transparent !important;
+}
+
+.mat-mdc-header-row {
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--secondary-color) 100%
+  ) !important;
+  height: 48px !important;
+}
+
+.mat-mdc-header-cell {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: none !important;
+  padding: 12px 16px !important;
+}
+
+.mat-mdc-row {
+  height: 52px !important;
+
+  &:hover {
+    background-color: var(--hover-bg) !important;
+  }
+}
+
+.mat-mdc-cell {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  padding: 12px 16px !important;
+  font-size: 0.9rem !important;
+}
+
+.mat-mdc-footer-row {
+  background-color: var(--bg-secondary);
+}
+
+.mat-mdc-paginator {
+  background: transparent !important;
+  border-top: 1px solid var(--border-light);
+}
+
+// ----------------------------------------------------------
+// Action Buttons
+// Consistent small buttons for table actions (edit, delete, toggle)
+// ----------------------------------------------------------
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  i {
+    margin: 0;
+  }
+
+  // Edit Button - Primary Blue
+  &.btn-edit {
+    background-color: var(--primary-color);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+  }
+
+  // Toggle Status Button - Warning Orange (for active items)
+  &.btn-toggle-active {
+    background-color: var(--warning-color);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #d97706;
+      transform: translateY(-1px);
+    }
+  }
+
+  // Toggle Status Button - Success Green (for inactive items)
+  &.btn-toggle-inactive {
+    background-color: var(--success-color);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #059669;
+      transform: translateY(-1px);
+    }
+  }
+
+  // Delete Button - Danger Red
+  &.btn-delete {
+    background-color: var(--danger-color);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #dc2626;
+      transform: translateY(-1px);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ----------------------------------------------------------
+// Bootstrap Button Overrides
+// Ensure consistent button sizing in tables
+// ----------------------------------------------------------
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+
+  i {
+    font-size: 0.8125rem;
+  }
+}
+
+.btn {
+  transition: all var(--transition-normal);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// ----------------------------------------------------------
+// Badge Styles
+// Consistent badges for status and labels
+// ----------------------------------------------------------
+.badge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.35em 0.75em;
+  border-radius: var(--radius-sm);
+
+  &.bg-success,
+  &.bg-active {
+    background-color: var(--success-color) !important;
+  }
+
+  &.bg-danger,
+  &.bg-inactive {
+    background-color: var(--danger-color) !important;
+  }
+
+  &.bg-warning,
+  &.bg-pending {
+    background-color: var(--warning-color) !important;
+  }
+
+  &.bg-info {
+    background-color: var(--info-color) !important;
+  }
+
+  &.bg-secondary {
+    background-color: var(--text-secondary) !important;
+  }
+}
+
+// ----------------------------------------------------------
+// Form Controls
+// Input fields and selects
+// ----------------------------------------------------------
+.input-group-text {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-right: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.form-control,
+.form-select {
+  font-size: 0.9rem;
+  border-color: var(--border-color);
+  border-radius: var(--radius-sm);
+
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+// ----------------------------------------------------------
+// Spinner/Loading
+// Loading indicator styles
+// ----------------------------------------------------------
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.25em;
+}
+
+// ----------------------------------------------------------
+// Text Utilities
+// Common text styling classes
+// ----------------------------------------------------------
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.text-success {
+  color: var(--success-color) !important;
+}
+
+.text-danger {
+  color: var(--danger-color) !important;
+}
+
+// ----------------------------------------------------------
+// Responsive Adjustments
+// ----------------------------------------------------------
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .table {
+    font-size: 0.8125rem;
+
+    thead th,
+    tbody td {
+      padding: 10px 12px;
+    }
+  }
+
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
   }
 }

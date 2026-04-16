@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,11 +12,12 @@ import {
   getLeaveTypeLabel,
 } from '../../models/leave.model';
 import { Permission } from '../../../../core/models/rbac.models';
+import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-leave-list',
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="container-fluid">
       <div class="row mb-4">
@@ -47,28 +48,30 @@ import { Permission } from '../../../../core/models/rbac.models';
       </div>
 
       <!-- Leave Balance Cards -->
-      <div class="row mb-4">
-        @for (balance of store.leaveBalances(); track balance.id) {
-          <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h6 class="text-muted mb-2">{{ getLeaveTypeLabel(balance.leaveType) }}</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h4 class="mb-0">{{ balance.available }}</h4>
-                    <small class="text-muted">Available</small>
-                  </div>
-                  <div class="text-end">
-                    <small class="text-muted">Total: {{ balance.totalAllocated }}</small
-                    ><br />
-                    <small class="text-muted">Used: {{ balance.totalAvailed }}</small>
+      @if (store.leaveBalances().length > 0) {
+        <div class="row mb-4">
+          @for (balance of store.leaveBalances(); track balance.id) {
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h6 class="text-muted mb-2">{{ getLeaveTypeLabel(balance.leaveType) }}</h6>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h4 class="mb-0">{{ balance.available }}</h4>
+                      <small class="text-muted">Available</small>
+                    </div>
+                    <div class="text-end">
+                      <small class="text-muted">Total: {{ balance.totalAllocated }}</small
+                      ><br />
+                      <small class="text-muted">Used: {{ balance.totalAvailed }}</small>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
 
       <!-- Filters -->
       <div class="row mb-3">
@@ -110,99 +113,114 @@ import { Permission } from '../../../../core/models/rbac.models';
 
       <!-- Leave Requests Table -->
       @if (store.loading()) {
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary"></div>
+        <div class="card shadow-sm">
+          <div class="card-body">
+            @for (row of skeletonRows; track $index) {
+              <app-loading-skeleton
+                type="table-row"
+                [columns]="['150px', '120px', '180px', '60px', '100px', '120px', '150px']"
+              ></app-loading-skeleton>
+            }
+          </div>
+        </div>
+      } @else if (store.error()) {
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {{ store.error() }}
+          <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
         </div>
       } @else {
         <div class="card shadow-sm">
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Leave Type</th>
-                    <th>Duration</th>
-                    <th>Days</th>
-                    <th>Status</th>
-                    <th>Applied On</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (request of store.leaveRequests(); track request.id) {
+            @if (store.leaveRequests().length === 0) {
+              <app-empty-state
+                icon="event_busy"
+                title="No Leave Requests"
+                message="There are no leave requests matching your criteria."
+                actionLabel="Apply Leave"
+                actionIcon="add"
+                (action)="navigateToApply()"
+              ></app-empty-state>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
                     <tr>
-                      <td>{{ request.employeeName || 'N/A' }}</td>
-                      <td>{{ getLeaveTypeLabel(request.leaveType) }}</td>
-                      <td>
-                        <div>{{ request.startDate | date: 'dd MMM' }}</div>
-                        <small class="text-muted"
-                          >to {{ request.endDate | date: 'dd MMM yyyy' }}</small
-                        >
-                      </td>
-                      <td>{{ request.totalDays }}</td>
-                      <td>
-                        <span
-                          class="badge"
-                          [class.bg-warning]="request.status === 'pending'"
-                          [class.bg-success]="request.status === 'approved'"
-                          [class.bg-danger]="request.status === 'rejected'"
-                          [class.bg-secondary]="request.status === 'cancelled'"
-                        >
-                          {{ getLeaveStatusLabel(request.status) }}
-                        </span>
-                      </td>
-                      <td>{{ request.createdAt | date: 'dd MMM yyyy' }}</td>
-                      <td>
-                        <div class="btn-group btn-group-sm">
-                          <button
-                            class="btn btn-outline-primary"
-                            (click)="viewRequest(request)"
-                            title="View"
+                      <th>Employee</th>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>Days</th>
+                      <th>Status</th>
+                      <th>Applied On</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (request of store.leaveRequests(); track request.id) {
+                      <tr>
+                        <td>{{ request.employeeName || 'N/A' }}</td>
+                        <td>{{ getLeaveTypeLabel(request.leaveType) }}</td>
+                        <td>
+                          <div>{{ request.startDate | date: 'dd MMM' }}</div>
+                          <small class="text-muted"
+                            >to {{ request.endDate | date: 'dd MMM yyyy' }}</small
                           >
-                            <i class="fas fa-eye"></i>
-                          </button>
-                          @if (store.canApprove() && request.status === 'pending') {
+                        </td>
+                        <td>{{ request.totalDays }}</td>
+                        <td>
+                          <span
+                            class="badge"
+                            [class.bg-warning]="request.status === 'pending'"
+                            [class.bg-success]="request.status === 'approved'"
+                            [class.bg-danger]="request.status === 'rejected'"
+                            [class.bg-secondary]="request.status === 'cancelled'"
+                          >
+                            {{ getLeaveStatusLabel(request.status) }}
+                          </span>
+                        </td>
+                        <td>{{ request.createdAt | date: 'dd MMM yyyy' }}</td>
+                        <td>
+                          <div class="btn-group btn-group-sm">
                             <button
-                              class="btn btn-success"
-                              (click)="onApprove(request)"
-                              title="Approve"
+                              class="btn btn-outline-primary"
+                              (click)="viewRequest(request)"
+                              title="View"
                             >
-                              <i class="fas fa-check"></i>
+                              <i class="fas fa-eye"></i>
                             </button>
-                            <button
-                              class="btn btn-danger"
-                              (click)="onReject(request)"
-                              title="Reject"
-                            >
-                              <i class="fas fa-times"></i>
-                            </button>
-                          }
-                          @if (request.status === 'pending' && !store.canApprove()) {
-                            <button
-                              class="btn btn-outline-danger"
-                              (click)="onCancel(request)"
-                              title="Cancel"
-                            >
-                              <i class="fas fa-times-circle"></i>
-                            </button>
-                          }
-                        </div>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="7" class="text-center py-4">
-                        <div class="text-muted">
-                          <i class="fas fa-calendar fa-2x mb-2 d-block"></i>
-                          No leave requests found
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                            @if (store.canApprove() && request.status === 'pending') {
+                              <button
+                                class="btn btn-success"
+                                (click)="onApprove(request)"
+                                title="Approve"
+                              >
+                                <i class="fas fa-check"></i>
+                              </button>
+                              <button
+                                class="btn btn-danger"
+                                (click)="onReject(request)"
+                                title="Reject"
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            }
+                            @if (request.status === 'pending' && !store.canApprove()) {
+                              <button
+                                class="btn btn-outline-danger"
+                                (click)="onCancel(request)"
+                                title="Cancel"
+                              >
+                                <i class="fas fa-times-circle"></i>
+                              </button>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
           </div>
         </div>
       }
@@ -217,6 +235,7 @@ export class LeaveListComponent implements OnInit {
   searchTerm = '';
   statusFilter = '';
   leaveTypeFilter = '';
+  skeletonRows = Array(5).fill(0);
 
   readonly Permission = Permission;
   readonly getLeaveStatusLabel = getLeaveStatusLabel;
@@ -237,6 +256,11 @@ export class LeaveListComponent implements OnInit {
       leaveType: this.leaveTypeFilter as LeaveType,
       page: 1,
     });
+  }
+
+  reload(): void {
+    this.store.loadLeaveRequests();
+    this.store.loadLeaveBalances();
   }
 
   navigateToApply(): void {

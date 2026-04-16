@@ -186,6 +186,30 @@ export class DepartmentStore {
     );
   }
 
+  toggleStatus(id: number): Observable<any> {
+    const dept = this._departments().find((d) => d.id === id);
+    if (!dept) return of({ success: false, message: 'Department not found' });
+
+    const newStatus = dept.status === 'active' ? 'inactive' : 'active';
+    this._loading.set(true);
+    return this.api.updateStatus(id, newStatus).pipe(
+      tap((response) => {
+        if (response.success) {
+          this._departments.update((list) =>
+            list.map((d) => (d.id === id ? { ...d, status: newStatus } : d)),
+          );
+        } else {
+          this._error.set(response.message || 'Failed to update status');
+        }
+      }),
+      catchError((err) => {
+        this._error.set(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this._loading.set(false)),
+    );
+  }
+
   setFilters(filters: DepartmentFilters): void {
     this._filters.set(filters);
     this.loadDepartments({ ...filters, page: 1 });

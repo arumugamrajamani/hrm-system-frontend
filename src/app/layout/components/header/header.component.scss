@@ -34,6 +34,11 @@
   }
 
   .page-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+
     h1 {
       font-size: 24px;
       font-weight: 700;
@@ -45,6 +50,7 @@
     .breadcrumb {
       font-size: 13px;
       color: #718096;
+      margin: 0;
     }
   }
 }
@@ -80,6 +86,9 @@
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       background: #edf2f7;
@@ -100,6 +109,33 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+  }
+
+  .command-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    height: 40px;
+    padding: 0 12px;
+    background: transparent;
+    border: 1px solid var(--border-color, #e0e0e0);
+    font-size: 18px;
+
+    &:hover {
+      background: #f7fafc;
+    }
+
+    .shortcut-badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      background: #edf2f7;
+      border-radius: 4px;
+      color: #718096;
+      border: 1px solid #e2e8f0;
     }
   }
 }
