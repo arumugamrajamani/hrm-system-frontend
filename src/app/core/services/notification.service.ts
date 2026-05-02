@@ -1,4 +1,12 @@
-import { Injectable, inject, signal, computed, PLATFORM_ID, NgZone } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  signal,
+  computed,
+  PLATFORM_ID,
+  NgZone,
+  OnDestroy,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Subject, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -10,7 +18,7 @@ import type {
 } from '../models/notification.model';
 
 @Injectable({ providedIn: 'root' })
-export class NotificationService {
+export class NotificationService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private destroy$ = new Subject<void>();

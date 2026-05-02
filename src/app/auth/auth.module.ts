@@ -5,7 +5,7 @@ import { LoginComponent } from './components/login/login.component';
 import { OtpComponent } from './components/otp/otp.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
-import { GuestGuard } from './guards';
+import { GuestGuard } from '../core/guards';
 
 const routes: Routes = [
   {

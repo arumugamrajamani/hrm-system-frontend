@@ -155,7 +155,7 @@ export class LeaveKanbanComponent implements OnInit {
     this.leaveStore.loadLeaveRequests();
 
     setTimeout(() => {
-      const requests = this.leaveStore.leaveRequests();
+      const requests = this.leaveStore.items();
       this.organizeToKanban(requests);
     }, 500);
   }

@@ -1,0 +1,212 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-layer-group me-2"></i>
+        {{ isEditMode() ? 'Edit Grade' : 'Add Grade' }}
+      </h2>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-secondary" (click)="onCancel()">
+        <i class="fas fa-arrow-left me-2"></i>
+        Back
+      </button>
+    </div>
+  </div>
+
+  @if (hasGlobalError()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      {{ getGlobalError() }}
+      <button type="button" class="btn-close" (click)="clearGlobalError()"></button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      @if (isLoading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="gradeForm()" (ngSubmit)="onSubmit()">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="grade_name" class="form-label">
+              Grade Name <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="grade_name"
+              formControlName="grade_name"
+              [class.is-invalid]="isFieldInvalid('grade_name')"
+              placeholder="Enter grade name"
+            />
+            @if (isFieldInvalid('grade_name')) {
+              <div class="invalid-feedback d-block">
+                @if (hasError('grade_name', 'required')) {
+                  Grade name is required
+                } @else if (hasError('grade_name', 'minlength')) {
+                  Grade name must be at least 2 characters
+                } @else if (hasError('grade_name', 'maxlength')) {
+                  Grade name cannot exceed 100 characters
+                } @else if (hasError('grade_name', 'serverError')) {
+                  {{ getErrorMessage('grade_name') }}
+                }
+              </div>
+            }
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="grade_code" class="form-label">
+              Grade Code <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="grade_code"
+              formControlName="grade_code"
+              [class.is-invalid]="isFieldInvalid('grade_code')"
+              placeholder="e.g., G001"
+            />
+            @if (isFieldInvalid('grade_code')) {
+              <div class="invalid-feedback d-block">
+                @if (hasError('grade_code', 'required')) {
+                  Grade code is required
+                } @else if (hasError('grade_code', 'minlength')) {
+                  Grade code must be at least 2 characters
+                } @else if (hasError('grade_code', 'maxlength')) {
+                  Grade code cannot exceed 20 characters
+                } @else if (hasError('grade_code', 'pattern')) {
+                  Grade code can only contain letters, numbers, hyphens, and underscores
+                } @else if (hasError('grade_code', 'serverError')) {
+                  {{ getErrorMessage('grade_code') }}
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="level" class="form-label"> Level <span class="text-danger">*</span> </label>
+            <input
+              type="number"
+              class="form-control"
+              id="level"
+              formControlName="level"
+              [class.is-invalid]="isFieldInvalid('level')"
+              placeholder="Enter level (1-100)"
+              min="1"
+              max="100"
+            />
+            @if (isFieldInvalid('level')) {
+              <div class="invalid-feedback d-block">
+                @if (hasError('level', 'required')) {
+                  Level is required
+                } @else if (hasError('level', 'min')) {
+                  Level must be at least 1
+                } @else if (hasError('level', 'max')) {
+                  Level cannot exceed 100
+                } @else if (hasError('level', 'serverError')) {
+                  {{ getErrorMessage('level') }}
+                }
+              </div>
+            }
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="min_salary" class="form-label">Min Salary</label>
+            <input
+              type="number"
+              class="form-control"
+              id="min_salary"
+              formControlName="min_salary"
+              [class.is-invalid]="isFieldInvalid('min_salary')"
+              placeholder="Enter minimum salary"
+              min="0"
+            />
+            @if (isFieldInvalid('min_salary') && hasError('min_salary', 'min')) {
+              <div class="invalid-feedback d-block">Min salary must be positive</div>
+            }
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="max_salary" class="form-label">Max Salary</label>
+            <input
+              type="number"
+              class="form-control"
+              id="max_salary"
+              formControlName="max_salary"
+              [class.is-invalid]="isFieldInvalid('max_salary')"
+              placeholder="Enter maximum salary"
+              min="0"
+            />
+            @if (isFieldInvalid('max_salary') && hasError('max_salary', 'min')) {
+              <div class="invalid-feedback d-block">Max salary must be positive</div>
+            }
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="currency" class="form-label">Currency</label>
+            <select class="form-select" id="currency" formControlName="currency">
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
+              <option value="INR">INR - Indian Rupee</option>
+              <option value="AUD">AUD - Australian Dollar</option>
+              <option value="CAD">CAD - Canadian Dollar</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" formControlName="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea
+            class="form-control"
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Enter grade description (optional)"
+            [class.is-invalid]="isFieldInvalid('description')"
+          ></textarea>
+          @if (isFieldInvalid('description') && hasError('description', 'maxlength')) {
+            <div class="invalid-feedback d-block">Description cannot exceed 1000 characters</div>
+          }
+        </div>
+
+        <div class="d-flex gap-2">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSubmitting() || !isFormValid()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            @if (isSubmitting()) {
+              Processing...
+            } @else {
+              {{ isEditMode() ? 'Update' : 'Create' }} Grade
+            }
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

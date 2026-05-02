@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.table {
+  th {
+    font-weight: 600;
+    color: #495057;
+    border-bottom-width: 2px;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+  text-transform: capitalize;
+}
+
+.bg-success {
+  background-color: #198754 !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.bg-secondary {
+  background-color: #6c757d !important;
+}

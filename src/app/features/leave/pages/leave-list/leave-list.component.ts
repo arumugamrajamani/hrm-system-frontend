@@ -132,7 +132,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
       } @else {
         <div class="card shadow-sm">
           <div class="card-body">
-            @if (store.leaveRequests().length === 0) {
+            @if (store.items().length === 0) {
               <app-empty-state
                 icon="event_busy"
                 title="No Leave Requests"
@@ -156,7 +156,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                     </tr>
                   </thead>
                   <tbody>
-                    @for (request of store.leaveRequests(); track request.id) {
+                    @for (request of store.items(); track request.id) {
                       <tr>
                         <td>{{ request.employeeName || 'N/A' }}</td>
                         <td>{{ getLeaveTypeLabel(request.leaveType) }}</td>

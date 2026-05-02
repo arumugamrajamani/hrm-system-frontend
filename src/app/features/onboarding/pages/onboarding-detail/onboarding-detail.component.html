@@ -1,0 +1,195 @@
+<div class="onboarding-detail-container">
+  @if (candidate(); as candidate) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ getFullName(candidate) }}</mat-card-title>
+        <mat-card-subtitle>{{ candidate.position }}</mat-card-subtitle>
+        <div class="header-actions">
+          <button mat-button (click)="goBack()"><mat-icon>arrow_back</mat-icon> Back</button>
+          @if (
+            canComplete() && candidate.status !== 'completed' && candidate.status !== 'cancelled'
+          ) {
+            <button mat-raised-button color="primary" (click)="completeOnboarding()">
+              <mat-icon>check_circle</mat-icon> Complete Onboarding
+            </button>
+          }
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        }
+
+        <div class="candidate-info">
+          <div class="info-item">
+            <span class="label">Email:</span>
+            <span>{{ candidate.email }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Phone:</span>
+            <span>{{ candidate.phone || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Department:</span>
+            <span>{{ candidate.department || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Location:</span>
+            <span>{{ candidate.location || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Joining Date:</span>
+            <span>{{ candidate.joiningDate | date }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Status:</span>
+            <span class="status-badge" [ngClass]="getStatusClass(candidate.status)">
+              {{ candidate.status }}
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">Offer Accepted:</span>
+            <span>{{ candidate.offerAccepted ? 'Yes' : 'No' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Progress:</span>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="candidate.checklistProgress"
+            ></mat-progress-bar>
+            <span class="progress-text">{{ candidate.checklistProgress }}%</span>
+          </div>
+        </div>
+
+        <mat-tab-group [(selectedIndex)]="activeTab">
+          <mat-tab label="Overview">
+            <div class="tab-content">
+              <h3>Overview</h3>
+              <p>Onboarding progress overview for {{ getFullName(candidate) }}.</p>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Checklist">
+            <div class="tab-content">
+              <table mat-table [dataSource]="checklist()" class="full-width-table">
+                <ng-container matColumnDef="completed">
+                  <th mat-header-cell *matHeaderCellDef>Done</th>
+                  <td mat-cell *matCellDef="let item">
+                    <mat-checkbox
+                      [checked]="item.completed"
+                      (change)="toggleChecklistItem(item)"
+                    ></mat-checkbox>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="title">
+                  <th mat-header-cell *matHeaderCellDef>Title</th>
+                  <td mat-cell *matCellDef="let item">{{ item.title }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="category">
+                  <th mat-header-cell *matHeaderCellDef>Category</th>
+                  <td mat-cell *matCellDef="let item">{{ getCategoryLabel(item.category) }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="assignedTo">
+                  <th mat-header-cell *matHeaderCellDef>Assigned To</th>
+                  <td mat-cell *matCellDef="let item">{{ item.assignedTo }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="dueDate">
+                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                  <td mat-cell *matCellDef="let item">{{ (item.dueDate | date) || "-" }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let item">
+                    @if (item.completed) {
+                      <span class="completed-text">Completed {{ item.completedAt | date }}</span>
+                    }
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedChecklistColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedChecklistColumns"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Documents">
+            <div class="tab-content">
+              <table mat-table [dataSource]="documents()" class="full-width-table">
+                <ng-container matColumnDef="documentType">
+                  <th mat-header-cell *matHeaderCellDef>Type</th>
+                  <td mat-cell *matCellDef="let doc">{{ doc.documentType }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="fileName">
+                  <th mat-header-cell *matHeaderCellDef>File</th>
+                  <td mat-cell *matCellDef="let doc">{{ doc.fileName }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="uploadedAt">
+                  <th mat-header-cell *matHeaderCellDef>Uploaded</th>
+                  <td mat-cell *matCellDef="let doc">{{ doc.uploadedAt | date }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="verified">
+                  <th mat-header-cell *matHeaderCellDef>Verified</th>
+                  <td mat-cell *matCellDef="let doc">
+                    <mat-chip [color]="doc.verified ? 'primary' : 'warn'" selected>
+                      {{ doc.verified ? 'Verified' : 'Pending' }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let doc">
+                    @if (!doc.verified) {
+                      <button
+                        mat-icon-button
+                        (click)="verifyDocument(doc.id, true)"
+                        matTooltip="Verify"
+                      >
+                        <mat-icon>check_circle</mat-icon>
+                      </button>
+                    } @else {
+                      <button
+                        mat-icon-button
+                        (click)="verifyDocument(doc.id, false)"
+                        matTooltip="Unverify"
+                      >
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    }
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedDocumentColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedDocumentColumns"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Timeline">
+            <div class="tab-content">
+              <h3>Timeline</h3>
+              <p>Onboarding events timeline (coming soon).</p>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-card-content>
+    </mat-card>
+  } @else if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <div class="no-data">Candidate not found.</div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

@@ -15,6 +15,8 @@ export interface User {
   avatar?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  departmentId?: number;
+  locationId?: number;
 }
 
 export interface UserRole {
@@ -31,29 +33,6 @@ export interface AuthResponse {
     token: string;
     refreshToken?: string;
   };
-}
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-  errors?: any;
-}
-
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  search?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 export interface MenuItem {
@@ -92,4 +71,31 @@ export interface ModalConfig {
   onCancel?: () => void;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export * from './rbac.models';
+export type {
+  ApiResponse,
+  ListResponse,
+  DetailResponse,
+  ErrorResponse,
+  BaseApiMethods,
+} from '../../shared/models/api-response.model';
+export { isSuccessResponse, extractErrorMessages } from '../../shared/models/api-response.model';
+export type {
+  PaginationParams,
+  SortParams,
+  PaginationState,
+  CursorPaginationParams,
+} from '../../shared/models/pagination.model';
+export {
+  DEFAULT_PAGINATION,
+  DEFAULT_PAGINATION_STATE,
+  calculateTotalPages,
+} from '../../shared/models/pagination.model';

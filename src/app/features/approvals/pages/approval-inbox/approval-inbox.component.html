@@ -1,0 +1,169 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-inbox me-2"></i>
+        Approval Inbox
+      </h2>
+    </div>
+    <div class="col-auto">
+      <span class="badge bg-primary fs-6"> {{ store.total() }} Pending </span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearch()"
+        />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" [(ngModel)]="entityTypeFilter" (ngModelChange)="onFilterChange()">
+        <option value="">All Entity Types</option>
+        @for (type of entityTypes; track type) {
+          <option [value]="type">{{ getEntityLabel(type) }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" [(ngModel)]="priorityFilter" (ngModelChange)="onFilterChange()">
+        <option value="">All Priorities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="dateFilter"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Filter by date"
+      />
+    </div>
+  </div>
+
+  <!-- Grouped by Entity Type -->
+  @if (store.loading()) {
+    <div class="card shadow-sm">
+      <div class="card-body">
+        @for (row of skeletonRows; track $index) {
+          <app-loading-skeleton
+            type="table-row"
+            [columns]="['200px', '150px', '100px', '120px', '150px', '120px']"
+          ></app-loading-skeleton>
+        }
+      </div>
+    </div>
+  } @else if (store.error()) {
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ store.error() }}
+      <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
+    </div>
+  } @else if (store.items().length === 0) {
+    <app-empty-state
+      icon="inbox"
+      title="No Pending Approvals"
+      message="There are no pending approvals matching your criteria."
+    ></app-empty-state>
+  } @else {
+    @for (group of groupedItems(); track group.entityType) {
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-folder me-2"></i>
+            {{ getEntityLabel(group.entityType) }}
+            <span class="badge bg-secondary ms-2">{{ group.items.length }}</span>
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Entity Name</th>
+                  <th>Step</th>
+                  <th>Status</th>
+                  <th>Initiated</th>
+                  <th>Due Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (workflow of group.items; track workflow.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ workflow.title }}</strong>
+                      @if (workflow.description) {
+                        <br /><small class="text-muted">{{ workflow.description }}</small>
+                      }
+                    </td>
+                    <td>{{ workflow.entityName || 'N/A' }}</td>
+                    <td>
+                      <span class="badge bg-info">
+                        Step {{ workflow.currentStep }}/{{ workflow.totalSteps }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-warning">
+                        {{ getStatusLabel(workflow.status) }}
+                      </span>
+                    </td>
+                    <td>{{ workflow.initiatedAt | date: 'dd MMM yyyy' }}</td>
+                    <td>
+                      @if (getDueDate(workflow)) {
+                        <span [class.text-danger]="isOverdue(workflow)">
+                          {{ getDueDate(workflow) | date: 'dd MMM' }}
+                        </span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button
+                          class="btn btn-outline-primary"
+                          (click)="viewWorkflow(workflow)"
+                          title="View"
+                        >
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        @if (store.canApprove()) {
+                          <button
+                            class="btn btn-success"
+                            (click)="onApprove(workflow)"
+                            title="Approve"
+                          >
+                            <i class="fas fa-check"></i>
+                          </button>
+                          <button
+                            class="btn btn-danger"
+                            (click)="onReject(workflow)"
+                            title="Reject"
+                          >
+                            <i class="fas fa-times"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

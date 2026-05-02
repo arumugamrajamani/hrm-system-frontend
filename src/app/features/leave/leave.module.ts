@@ -7,6 +7,8 @@ import { LeaveRequestComponent } from './pages/leave-request/leave-request.compo
 import { LeavePoliciesComponent } from './pages/leave-policies/leave-policies.component';
 import { LeaveBalancesComponent } from './pages/leave-balances/leave-balances.component';
 import { LeaveKanbanComponent } from './pages/leave-kanban/leave-kanban.component';
+import { LeaveAccrualsComponent } from './pages/leave-accruals/leave-accruals.component';
+import { LeaveEncashmentComponent } from './pages/leave-encashment/leave-encashment.component';
 import { PermissionGuard } from '../../core/guards';
 import { Permission } from '../../core/models/rbac.models';
 import { SharedModule } from '../../shared/shared.module';
@@ -55,6 +57,18 @@ const routes: Routes = [
         data: { rbac: { permissions: [Permission.READ] } },
       },
       {
+        path: 'accruals',
+        component: LeaveAccrualsComponent,
+        canActivate: [PermissionGuard],
+        data: { rbac: { permissions: [Permission.READ] } },
+      },
+      {
+        path: 'encashment',
+        component: LeaveEncashmentComponent,
+        canActivate: [PermissionGuard],
+        data: { rbac: { permissions: [Permission.READ] } },
+      },
+      {
         path: ':id',
         component: LeaveRequestComponent,
         canActivate: [PermissionGuard],
@@ -70,6 +84,8 @@ const routes: Routes = [
     LeaveRequestComponent,
     LeavePoliciesComponent,
     LeaveBalancesComponent,
+    LeaveAccrualsComponent,
+    LeaveEncashmentComponent,
   ],
   imports: [
     CommonModule,

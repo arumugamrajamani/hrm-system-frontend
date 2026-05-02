@@ -1,0 +1,68 @@
+:host {
+  display: block;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.btn-action {
+  background: none;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #f8f9fa;
+  }
+
+  &.btn-edit {
+    color: #0d6efd;
+    border-color: #0d6efd;
+
+    &:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
+  }
+
+  &.btn-delete {
+    color: #dc3545;
+    border-color: #dc3545;
+
+    &:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+  }
+
+  &.btn-toggle-active {
+    color: #ffc107;
+    border-color: #ffc107;
+
+    &:hover {
+      background-color: #ffc107;
+      color: white;
+    }
+  }
+
+  &.btn-toggle-inactive {
+    color: #198754;
+    border-color: #198754;
+
+    &:hover {
+      background-color: #198754;
+      color: white;
+    }
+  }
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}

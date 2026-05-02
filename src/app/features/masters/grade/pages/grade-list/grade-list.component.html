@@ -1,0 +1,198 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-layer-group me-2"></i>
+        Grade/Band Management
+      </h2>
+    </div>
+    <div class="col-auto">
+      @if (store.canCreate()) {
+        <button class="btn btn-primary" (click)="navigateToAdd()">
+          <i class="fas fa-plus me-2"></i>
+          Add Grade
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name or code..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select
+        class="form-select"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="onStatusChange($event)"
+      >
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  @if (store.loading()) {
+    <div class="card shadow-sm">
+      <div class="card-body">
+        @for (row of skeletonRows; track $index) {
+          <app-loading-skeleton
+            type="table-row"
+            [columns]="['200px', '100px', '80px', '120px', '120px', '100px', '100px', '100px']"
+          ></app-loading-skeleton>
+        }
+      </div>
+    </div>
+  } @else if (store.error()) {
+    <div class="alert alert-danger" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ store.error() }}
+      <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
+    </div>
+  } @else {
+    <div class="card shadow-sm">
+      <div class="card-body pt-0">
+        @if (store.grades().length === 0) {
+          <app-empty-state
+            icon="layers"
+            title="No Grades Found"
+            message="Get started by creating your first grade/band."
+            actionLabel="Add Grade"
+            actionIcon="add"
+            (action)="navigateToAdd()"
+          ></app-empty-state>
+        } @else {
+          <div class="table-responsive">
+            <table mat-table [dataSource]="dataSource" class="table table-hover">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Grade Name</th>
+                <td mat-cell *matCellDef="let grade">{{ grade.name }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="code">
+                <th mat-header-cell *matHeaderCellDef>Code</th>
+                <td mat-cell *matCellDef="let grade">
+                  <span class="badge bg-secondary">{{ grade.code }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="level">
+                <th mat-header-cell *matHeaderCellDef>Level</th>
+                <td mat-cell *matCellDef="let grade">{{ grade.level }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="minSalary">
+                <th mat-header-cell *matHeaderCellDef>Min Salary</th>
+                <td mat-cell *matCellDef="let grade">
+                  {{
+                    grade.minSalary ? (grade.minSalary | currency: grade.currency || 'USD') : '-'
+                  }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="maxSalary">
+                <th mat-header-cell *matHeaderCellDef>Max Salary</th>
+                <td mat-cell *matCellDef="let grade">
+                  {{
+                    grade.maxSalary ? (grade.maxSalary | currency: grade.currency || 'USD') : '-'
+                  }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let grade">
+                  @if (grade.status === 'active') {
+                    <span class="badge bg-success">Active</span>
+                  } @else {
+                    <span class="badge bg-danger">Inactive</span>
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="employeeCount">
+                <th mat-header-cell *matHeaderCellDef>Employees</th>
+                <td mat-cell *matCellDef="let grade">{{ grade.employeeCount || 0 }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let grade">
+                  @if (store.canEdit()) {
+                    <button
+                      class="btn-action btn-edit me-1"
+                      (click)="navigateToEdit(grade)"
+                      title="Edit"
+                    >
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
+                  }
+                  <button
+                    class="btn-action me-1"
+                    [class.btn-toggle-active]="grade.status === 'active'"
+                    [class.btn-toggle-inactive]="grade.status === 'inactive'"
+                    (click)="onToggleStatus(grade)"
+                    [title]="grade.status === 'active' ? 'Deactivate' : 'Activate'"
+                  >
+                    @if (grade.status === 'active') {
+                      <i class="fas fa-ban"></i>
+                    } @else {
+                      <i class="fas fa-check"></i>
+                    }
+                  </button>
+                  @if (store.canDelete()) {
+                    <button
+                      class="btn-action btn-delete ms-1"
+                      (click)="onDelete(grade)"
+                      title="Delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell text-center py-4" [attr.colspan]="displayedColumns.length">
+                  <app-empty-state
+                    icon="layers"
+                    title="No Grades Found"
+                    message="Get started by creating your first grade/band."
+                    actionLabel="Add Grade"
+                    actionIcon="add"
+                    (action)="navigateToAdd()"
+                  ></app-empty-state>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            [pageSize]="store.pagination().limit"
+            [length]="store.pagination().total"
+            [pageIndex]="store.pagination().page - 1"
+            (page)="onPageChange($event.pageIndex + 1); onPageSizeChange($event.pageSize)"
+            showFirstLastButtons
+          >
+          </mat-paginator>
+        }
+      </div>
+    </div>
+  }
+</div>

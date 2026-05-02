@@ -6,7 +6,6 @@ import {
   PermissionAction,
   DEFAULT_PERMISSION_MAPPING,
   MenuItemConfig,
-  MANAGE_PERMISSION,
   normalizeRole,
 } from '../models/rbac.models';
 
@@ -46,15 +45,15 @@ export class RbacService {
     }
 
     if (userPermissions.includes('all')) {
-      return Array.from(new Set([...rolePermissions, MANAGE_PERMISSION]));
+      return Array.from(new Set([...rolePermissions, Permission.MANAGE]));
     }
 
     if (userPermissions.includes('read') && userPermissions.length === 1) {
       return rolePermissions;
     }
 
-    const validPermissions = userPermissions.filter(
-      (p) => Object.values(Permission).includes(p as Permission) || p === MANAGE_PERMISSION,
+    const validPermissions = userPermissions.filter((p) =>
+      Object.values(Permission).includes(p as Permission),
     );
 
     if (validPermissions.length === 0) {
@@ -111,7 +110,7 @@ export class RbacService {
   }
 
   canManage(): boolean {
-    return this.hasPermission(MANAGE_PERMISSION);
+    return this.hasPermission(Permission.MANAGE);
   }
 
   filterMenuByPermission(items: MenuItemConfig[]): MenuItemConfig[] {
@@ -166,7 +165,7 @@ export class RbacService {
       [Permission.CREATE]: 'Create',
       [Permission.EDIT]: 'Edit',
       [Permission.DELETE]: 'Delete',
-      [MANAGE_PERMISSION]: 'Manage',
+      [Permission.MANAGE]: 'Manage',
     };
     return labels[permission] || permission;
   }
@@ -209,8 +208,8 @@ export class RbacService {
       }
     }
 
-    if (resourceConfig.actions.includes('manage')) {
-      return this.hasPermission(MANAGE_PERMISSION);
+    if (resourceConfig.actions.includes(Permission.MANAGE)) {
+      return this.hasPermission(Permission.MANAGE);
     }
 
     return this.hasPermission(action);

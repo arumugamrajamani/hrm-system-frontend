@@ -1,4 +1,13 @@
-import { Component, inject, signal, OnInit, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  OnInit,
+  AfterViewInit,
+  ElementRef,
+  ViewChildren,
+  QueryList,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthApiService } from '../../services';
@@ -8,7 +17,7 @@ import { ToasterService, ModalService } from '../../../core/services';
   selector: 'app-otp',
   standalone: false,
   templateUrl: './otp.component.html',
-  styleUrls: ['./otp.component.scss']
+  styleUrls: ['./otp.component.scss'],
 })
 export class OtpComponent implements AfterViewInit {
   private fb = inject(FormBuilder);
@@ -144,7 +153,7 @@ export class OtpComponent implements AfterViewInit {
     this.isLoading.set(true);
 
     this.authApi.verifyOtp(this.email(), otp).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.toaster.success('OTP Verified', 'Redirecting...');
@@ -159,12 +168,19 @@ export class OtpComponent implements AfterViewInit {
         this.isLoading.set(false);
         this.markAllWrong();
         this.modalService.showError('Verification Failed', 'Invalid or expired OTP');
-      }
+      },
     });
   }
 
   private markAllWrong(): void {
-    const newStatus: Array<'correct' | 'wrong' | ''> = ['wrong', 'wrong', 'wrong', 'wrong', 'wrong', 'wrong'];
+    const newStatus: Array<'correct' | 'wrong' | ''> = [
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+    ];
     this.otpStatus.set(newStatus);
 
     setTimeout(() => {
@@ -186,8 +202,8 @@ export class OtpComponent implements AfterViewInit {
 
     this.isLoading.set(true);
 
-    this.authApi.resendOtp(this.email()).subscribe({
-      next: (response) => {
+    this.authApi.forgotPassword(this.email()).subscribe({
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.toaster.success('OTP Sent', 'A new OTP has been sent to your email');
@@ -199,14 +215,14 @@ export class OtpComponent implements AfterViewInit {
       error: () => {
         this.isLoading.set(false);
         this.modalService.showError('Error', 'Failed to resend OTP');
-      }
+      },
     });
   }
 
   private startResendCooldown(): void {
     this.resendCooldown.set(60);
     const interval = setInterval(() => {
-      this.resendCooldown.update(v => {
+      this.resendCooldown.update((v) => {
         if (v <= 1) {
           clearInterval(interval);
           return 0;

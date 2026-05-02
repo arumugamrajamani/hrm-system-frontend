@@ -83,10 +83,10 @@ export class PayrollStore {
     });
   }
 
-  createRun(month: number, year: number): Observable<any> {
+  createRun(run: any): Observable<any> {
     this._loading.set(true);
-    return this.api.createRun(month, year).pipe(
-      tap((response) => {
+    return this.api.createRun(run).pipe(
+      tap((response: any) => {
         if (response.success) {
           this._payrollRuns.update((list) => [response.data, ...list]);
         } else {
@@ -147,8 +147,8 @@ export class PayrollStore {
   }
 
   loadComponents(): void {
-    this.api.listComponents().subscribe({
-      next: (response) => {
+    this.api.getSalaryComponents().subscribe({
+      next: (response: any) => {
         if (response.success) {
           this._components.set(response.data || []);
         }
@@ -157,8 +157,8 @@ export class PayrollStore {
   }
 
   createComponent(data: Partial<SalaryComponent>): Observable<any> {
-    return this.api.createComponent(data).pipe(
-      tap((response) => {
+    return this.api.createSalaryComponent(data).pipe(
+      tap((response: any) => {
         if (response.success) {
           this._components.update((list) => [...list, response.data]);
         }
@@ -167,8 +167,8 @@ export class PayrollStore {
   }
 
   updateComponent(id: number, data: Partial<SalaryComponent>): Observable<any> {
-    return this.api.updateComponent(id, data).pipe(
-      tap((response) => {
+    return this.api.updateSalaryComponent(id, data).pipe(
+      tap((response: any) => {
         if (response.success) {
           this._components.update((list) => list.map((c) => (c.id === id ? { ...c, ...data } : c)));
         }
@@ -177,8 +177,8 @@ export class PayrollStore {
   }
 
   deleteComponent(id: number): Observable<any> {
-    return this.api.deleteComponent(id).pipe(
-      tap((response) => {
+    return this.api.deleteSalaryComponent(id).pipe(
+      tap((response: any) => {
         if (response.success) {
           this._components.update((list) => list.filter((c) => c.id !== id));
         }

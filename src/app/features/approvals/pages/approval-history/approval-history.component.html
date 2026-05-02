@@ -1,0 +1,124 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-history me-2"></i>
+        Approval History
+      </h2>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label class="form-label">From Date</label>
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="fromDate"
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">To Date</label>
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="toDate"
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Entity Type</label>
+      <select class="form-select" [(ngModel)]="entityTypeFilter" (ngModelChange)="onFilterChange()">
+        <option value="">All Types</option>
+        @for (type of entityTypes; track type) {
+          <option [value]="type">{{ getEntityLabel(type) }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Action Taken</label>
+      <select class="form-select" [(ngModel)]="actionFilter" (ngModelChange)="onFilterChange()">
+        <option value="">All Actions</option>
+        <option value="approve">Approved</option>
+        <option value="reject">Rejected</option>
+        <option value="cancel">Cancelled</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- History Table -->
+  @if (store.loading()) {
+    <div class="card shadow-sm">
+      <div class="card-body">
+        @for (row of skeletonRows; track $index) {
+          <app-loading-skeleton
+            type="table-row"
+            [columns]="['150px', '180px', '120px', '120px', '150px', '200px']"
+          ></app-loading-skeleton>
+        }
+      </div>
+    </div>
+  } @else if (store.error()) {
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ store.error() }}
+      <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
+    </div>
+  } @else if (store.history().length === 0) {
+    <app-empty-state
+      icon="history"
+      title="No History Found"
+      message="There are no approval history records matching your criteria."
+    ></app-empty-state>
+  } @else {
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Workflow</th>
+                <th>Step</th>
+                <th>Action</th>
+                <th>Performed By</th>
+                <th>Date</th>
+                <th>Comments</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.history(); track item.id) {
+                <tr>
+                  <td>
+                    <strong>Workflow #{{ item.workflowId }}</strong>
+                  </td>
+                  <td>{{ item.stepName }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [class.bg-success]="item.action === 'approve'"
+                      [class.bg-danger]="item.action === 'reject'"
+                      [class.bg-secondary]="item.action === 'cancel'"
+                    >
+                      {{ getActionLabel(item.action) }}
+                    </span>
+                  </td>
+                  <td>{{ item.performedByName || 'User #' + item.performedBy }}</td>
+                  <td>{{ item.performedAt | date: 'dd MMM yyyy HH:mm' }}</td>
+                  <td>
+                    @if (item.comments) {
+                      <small class="text-muted">{{ item.comments }}</small>
+                    } @else {
+                      <span class="text-muted">-</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

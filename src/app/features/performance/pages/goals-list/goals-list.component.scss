@@ -1,0 +1,40 @@
+.page-title {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.card {
+  border: none;
+  border-radius: 8px;
+
+  .card-body {
+    padding: 1.25rem;
+  }
+}
+
+.progress {
+  border-radius: 4px;
+  background-color: #e9ecef;
+
+  .progress-bar {
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+}
+
+.table {
+  th {
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom-width: 1px;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}

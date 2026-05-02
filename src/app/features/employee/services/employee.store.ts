@@ -11,7 +11,7 @@ export class EmployeeStore extends BaseStore<EmployeeListItem> {
   private readonly api = inject(EmployeeApiService);
   private readonly rbacService = inject(RbacService);
 
-  readonly canViewSalary = computed(() => this.rbacService.hasPermission('manage'));
+  readonly canViewSalary = computed(() => this.rbacService.hasPermission(Permission.MANAGE));
   readonly canEdit = computed(() => this.rbacService.hasPermission(Permission.EDIT));
   readonly canDelete = computed(() => this.rbacService.hasPermission(Permission.DELETE));
   readonly canCreate = computed(() => this.rbacService.hasPermission(Permission.CREATE));
@@ -156,7 +156,7 @@ export class EmployeeStore extends BaseStore<EmployeeListItem> {
   }
 
   canViewField(field: 'salary' | 'bankDetails' | 'taxDetails'): boolean {
-    return this.rbacService.hasPermission('manage');
+    return this.rbacService.hasPermission(Permission.MANAGE);
   }
 
   getEmployeeById(id: number | string): EmployeeListItem | undefined {

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { Department, DepartmentFilters, DepartmentTree } from '../models/department.model';
+import { ListResponse, DetailResponse, ApiResponse } from '../../../../shared/models/api-response.model';
 
 interface ApiDepartment {
   id: number;
@@ -22,34 +23,10 @@ interface ApiDepartment {
   updated_at?: string;
 }
 
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
-interface ApiResponse<T> {
-  data?: T;
-  success: boolean;
-  message?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class DepartmentApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.departmentsApiUrl;
+  private readonly baseUrl = `${environment.apiUrl}/departments`;
 
   private mapApiToDepartment(api: ApiDepartment): Department {
     return {

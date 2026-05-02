@@ -14,7 +14,7 @@ export interface Role {
   providedIn: 'root',
 })
 export class RolesApiService {
-  private readonly apiUrl = environment.usersApiUrl + '/roles';
+  private readonly apiUrl = environment.apiUrl + '/roles';
 
   constructor(private http: HttpClient) {}
 

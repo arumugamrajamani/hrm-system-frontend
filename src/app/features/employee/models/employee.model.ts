@@ -169,3 +169,145 @@ export function getEmploymentTypeLabel(type: EmploymentType): string {
   };
   return labels[type] || type;
 }
+
+// Compensation and Salary History
+export interface CompensationStructure {
+  id: number;
+  employeeId: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  currency: string;
+  components: SalaryComponent[];
+  totalAnnualCTC: number;
+  totalMonthlyGross: number;
+  status: 'active' | 'draft' | 'archived';
+}
+
+export interface SalaryComponent {
+  id: number;
+  structureId: number;
+  componentType: 'earning' | 'deduction' | 'reimbursement';
+  componentName: string;
+  componentCode: string;
+  amount: number;
+  isPercentageBased: boolean;
+  percentageOf?: string;
+  isTaxable: boolean;
+  isStatutory: boolean;
+}
+
+export interface SalaryRevision {
+  id: number;
+  employeeId: number;
+  revisionType: 'increment' | 'decrement' | 'promotion' | 'transfer' | 'correction';
+  effectiveDate: string;
+  oldCTC: number;
+  newCTC: number;
+  percentageChange: number;
+  reason?: string;
+  approvedBy?: number;
+  approvedByName?: string;
+  approvedAt?: string;
+}
+
+// Transfer and Promotion History
+export interface EmployeeTransfer {
+  id: number;
+  employeeId: number;
+  transferType: 'department' | 'location' | 'designation' | 'grade' | 'company';
+  effectiveDate: string;
+  fromDepartmentId?: number;
+  fromDepartmentName?: string;
+  toDepartmentId?: number;
+  toDepartmentName?: string;
+  fromLocationId?: number;
+  fromLocationName?: string;
+  toLocationId?: number;
+  toLocationName?: string;
+  fromDesignationId?: number;
+  fromDesignationName?: string;
+  toDesignationId?: number;
+  toDesignationName?: string;
+  reason?: string;
+  approvedBy?: number;
+  approvedByName?: string;
+  remarks?: string;
+}
+
+export interface EmployeePromotion {
+  id: number;
+  employeeId: number;
+  effectiveDate: string;
+  fromDesignationId: number;
+  fromDesignationName: string;
+  fromGradeId?: number;
+  fromGradeName?: string;
+  toDesignationId: number;
+  toDesignationName: string;
+  toGradeId?: number;
+  toGradeName?: string;
+  fromSalary?: number;
+  toSalary?: number;
+  reason?: string;
+  approvedBy?: number;
+  approvedByName?: string;
+  remarks?: string;
+}
+
+// Employee Lifecycle History
+export interface EmployeeLifecycleEvent {
+  id: number;
+  employeeId: number;
+  eventType:
+    | 'joined'
+    | 'confirmed'
+    | 'transferred'
+    | 'promoted'
+    | 'resigned'
+    | 'terminated'
+    | 'retired'
+    | 'reactivated';
+  eventDate: string;
+  details?: string;
+  performedBy?: number;
+  performedByName?: string;
+}
+
+// Profile completeness
+export interface ProfileCompleteness {
+  overall: number;
+  personalInfo: number;
+  officialInfo: number;
+  emergencyContacts: number;
+  dependents: number;
+  documents: number;
+  bankDetails: number;
+  taxDetails: number;
+  missingFields: string[];
+}
+
+// Attendance/Leave summary for profile
+export interface EmployeeAttendanceSummary {
+  presentDays: number;
+  absentDays: number;
+  leaveDays: number;
+  halfDays: number;
+  lateCount: number;
+  earlyLeaveCount: number;
+  overtimeHours: number;
+  period: {
+    from: string;
+    to: string;
+  };
+}
+
+export interface EmployeeLeaveSummary {
+  leaveBalances: {
+    leaveTypeId: number;
+    leaveTypeName: string;
+    totalAllocated: number;
+    used: number;
+    balance: number;
+    carryForward: number;
+  }[];
+}

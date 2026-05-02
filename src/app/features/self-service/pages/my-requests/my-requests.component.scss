@@ -1,0 +1,40 @@
+.my-requests {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  h2 {
+    margin-bottom: 24px;
+  }
+
+  .filter-card {
+    margin-bottom: 24px;
+
+    .filter-form {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+
+      mat-form-field {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .filter-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+    }
+  }
+
+  .table-container {
+    padding: 16px 0;
+    overflow-x: auto;
+
+    .full-width {
+      width: 100%;
+    }
+  }
+}

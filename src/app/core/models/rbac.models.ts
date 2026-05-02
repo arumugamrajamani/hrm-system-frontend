@@ -10,11 +10,10 @@ export enum Permission {
   CREATE = 'create',
   EDIT = 'edit',
   DELETE = 'delete',
+  MANAGE = 'manage',
 }
 
-export type PermissionAction = Permission | 'manage';
-
-export const MANAGE_PERMISSION = 'manage' as const;
+export type PermissionAction = Permission;
 
 export const ROLE_LABELS: Record<Role, string> = {
   [Role.SUPERADMIN]: 'Super Admin',
@@ -43,7 +42,7 @@ export const ROLE_PERMISSION_MAPPING: RolePermissionConfig[] = [
       Permission.CREATE,
       Permission.EDIT,
       Permission.DELETE,
-      'manage' as PermissionAction,
+      Permission.MANAGE,
     ],
   },
   {
@@ -68,13 +67,13 @@ export interface MenuItemConfig {
   children?: MenuItemConfig[];
 }
 
-export const DEFAULT_PERMISSION_MAPPING: Record<Role, (Permission | PermissionAction)[]> = {
+export const DEFAULT_PERMISSION_MAPPING: Record<Role, Permission[]> = {
   [Role.SUPERADMIN]: [
     Permission.READ,
     Permission.CREATE,
     Permission.EDIT,
     Permission.DELETE,
-    MANAGE_PERMISSION,
+    Permission.MANAGE,
   ],
   [Role.ADMIN]: [Permission.READ, Permission.CREATE, Permission.EDIT, Permission.DELETE],
   [Role.MANAGER]: [Permission.READ, Permission.CREATE, Permission.EDIT],

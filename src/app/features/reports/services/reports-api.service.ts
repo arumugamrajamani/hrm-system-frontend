@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import {
   Report,
   ReportFilter,
@@ -13,23 +14,12 @@ import {
   PayrollSummaryReport,
   EmployeeReport,
 } from '../models/report.model';
-
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
+import { ListResponse, DetailResponse } from '../../../shared/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/reports';
+  private readonly baseUrl = `${environment.apiUrl}/reports`;
 
   listReports(params?: Record<string, unknown>): Observable<ListResponse<Report>> {
     let httpParams = new HttpParams();

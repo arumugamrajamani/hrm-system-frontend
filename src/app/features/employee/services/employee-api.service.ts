@@ -1,41 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import {
   Employee,
   EmployeeFilters,
   EmployeeListItem,
   EmployeeProfile,
 } from '../models/employee.model';
-
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
-interface ApiResponse<T> {
-  data?: T;
-  success: boolean;
-  message?: string;
-}
+import { ListResponse, DetailResponse, ApiResponse } from '../../../shared/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/employees';
+  private readonly baseUrl = `${environment.apiUrl}/employees`;
 
   list(params: Record<string, unknown>): Observable<ListResponse<EmployeeListItem>> {
     let httpParams = new HttpParams();

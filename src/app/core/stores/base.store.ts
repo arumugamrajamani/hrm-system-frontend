@@ -1,5 +1,12 @@
 import { signal, computed, Injectable, type Signal } from '@angular/core';
 import { Observable, tap, catchError, finalize, of } from 'rxjs';
+import type {
+  ListResponse,
+  DetailResponse,
+  ApiResponse,
+  BaseApiMethods,
+} from '../../shared/models/api-response.model';
+import type { PaginationParams } from '../../shared/models/pagination.model';
 
 export interface PaginationState {
   page: number;
@@ -17,48 +24,7 @@ export interface BaseListState<T> {
   filters: Record<string, unknown>;
 }
 
-export interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  meta?: Record<string, any>;
-}
-
-export interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-  meta?: Record<string, any>;
-}
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-}
-
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  search?: string;
-  [key: string]: any;
-}
-
-export interface BaseApiMethods<T> {
-  list: (params: Record<string, unknown>) => Observable<ListResponse<T>>;
-  get: (id: number | string) => Observable<DetailResponse<T>>;
-  create: (data: Partial<T>) => Observable<DetailResponse<T>>;
-  update: (id: number | string, data: Partial<T>) => Observable<DetailResponse<T>>;
-  delete: (id: number | string) => Observable<ApiResponse<T>>;
-}
+export { ListResponse, DetailResponse, ApiResponse, BaseApiMethods, PaginationParams };
 
 @Injectable()
 export class BaseStore<T extends { id?: number | string }> {

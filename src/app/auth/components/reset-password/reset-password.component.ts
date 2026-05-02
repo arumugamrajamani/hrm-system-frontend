@@ -1,5 +1,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthApiService } from '../../services';
 import { ToasterService, ModalService } from '../../../core/services';
@@ -37,7 +43,7 @@ function passwordValidator(control: AbstractControl): ValidationErrors | null {
   standalone: false,
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss'],
-  providers: [PasswordStrengthPipe]
+  providers: [PasswordStrengthPipe],
 })
 export class ResetPasswordComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -56,12 +62,15 @@ export class ResetPasswordComponent implements OnInit {
   token = '';
 
   constructor() {
-    this.resetForm = this.fb.group({
-      password: ['', [Validators.required, passwordValidator]],
-      confirmPassword: ['', [Validators.required]]
-    }, {
-      validators: this.passwordMatchValidator
-    });
+    this.resetForm = this.fb.group(
+      {
+        password: ['', [Validators.required, passwordValidator]],
+        confirmPassword: ['', [Validators.required]],
+      },
+      {
+        validators: this.passwordMatchValidator,
+      },
+    );
   }
 
   ngOnInit(): void {
@@ -88,11 +97,11 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   togglePassword(): void {
-    this.showPassword.update(v => !v);
+    this.showPassword.update((v) => !v);
   }
 
   toggleConfirmPassword(): void {
-    this.showConfirmPassword.update(v => !v);
+    this.showConfirmPassword.update((v) => !v);
   }
 
   onSubmit(): void {
@@ -103,8 +112,8 @@ export class ResetPasswordComponent implements OnInit {
 
     this.isLoading.set(true);
 
-    this.authApi.resetPassword(this.token, this.resetForm.value.password).subscribe({
-      next: (response) => {
+    this.authApi.resetPassword(this.email, this.token, this.resetForm.value.password).subscribe({
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.toaster.success('Password Reset', 'Your password has been changed successfully');
@@ -116,7 +125,7 @@ export class ResetPasswordComponent implements OnInit {
       error: () => {
         this.isLoading.set(false);
         this.modalService.showError('Error', 'Failed to reset password. Please try again.');
-      }
+      },
     });
   }
 

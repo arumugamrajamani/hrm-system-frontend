@@ -9,6 +9,7 @@ import {
   UpdateLocationDto,
   BranchCodeResponse,
 } from '../models/location.model';
+import { ListResponse, DetailResponse, ApiResponse } from '../../../../shared/models/api-response.model';
 
 interface ApiLocation {
   id: number;
@@ -34,34 +35,10 @@ interface ApiLocation {
   updated_by_username?: string;
 }
 
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
-interface ApiResponse<T> {
-  data?: T;
-  success: boolean;
-  message?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class LocationApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.locationsApiUrl;
+  private readonly baseUrl = `${environment.apiUrl}/locations`;
 
   private mapApiToLocation(api: ApiLocation): Location {
     return {

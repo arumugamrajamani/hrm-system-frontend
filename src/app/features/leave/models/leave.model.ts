@@ -114,3 +114,99 @@ export function getLeaveBalancePercentage(balance: LeaveBalance): number {
   if (balance.totalAllocated === 0) return 0;
   return Math.round((balance.available / balance.totalAllocated) * 100);
 }
+
+// Accrual and Carry Forward
+export interface LeaveAccrualRule {
+  id: number;
+  leaveTypeId: number;
+  leaveTypeName?: string;
+  accrualFrequency: 'monthly' | 'quarterly' | 'annually';
+  accrualAmount: number;
+  maxAccrualPerPeriod?: number;
+  maxAccrualCarryForward?: number;
+  accrualStartDate?: string;
+  isActive: boolean;
+}
+
+export interface LeaveAccrual {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  leaveTypeId: number;
+  leaveTypeName?: string;
+  accrualDate: string;
+  accruedDays: number;
+  adjustmentDays?: number;
+  netAccrued: number;
+  carriedForward?: number;
+  encashed?: number;
+  encashmentAmount?: number;
+  period: {
+    from: string;
+    to: string;
+  };
+}
+
+// Leave Encashment
+export interface LeaveEncashment {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  leaveTypeId: number;
+  leaveTypeName?: string;
+  encashedDays: number;
+  ratePerDay: number;
+  totalAmount: number;
+  requestedDate: string;
+  processedDate?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'processed';
+  approvedBy?: number;
+  approvedByName?: string;
+  remarks?: string;
+  payrollMonth?: string;
+}
+
+// Leave Approval Matrix
+export interface LeaveApprovalRule {
+  id: number;
+  leaveTypeId?: number;
+  departmentId?: number;
+  locationId?: number;
+  minDaysRequired: number;
+  maxDaysRequired?: number;
+  approverLevel: number;
+  approverRole: 'manager' | 'hr' | 'department_head' | 'custom';
+  approverUserId?: number;
+  approverUserName?: string;
+  isActive: boolean;
+}
+
+// Delegation/Acting Approver
+export interface ApproverDelegation {
+  id: number;
+  delegatorId: number;
+  delegatorName?: string;
+  delegateeId: number;
+  delegateeName?: string;
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  scope: 'all' | 'leave' | 'timesheet' | 'general';
+  remarks?: string;
+}
+
+export interface LeaveTypeWithAccrual {
+  leaveType: LeaveType;
+  accrualRules?: LeaveAccrualRule[];
+  allowEncashment: boolean;
+  encashmentMaxDays?: number;
+  encashmentRatePerDay?: number;
+}
+
+export interface LeaveBalanceWithAccrual extends LeaveBalance {
+  accruedThisPeriod: number;
+  carriedForward: number;
+  encashed: number;
+  encashmentAmount: number;
+  projectedBalance: number;
+}

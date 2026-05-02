@@ -1,0 +1,134 @@
+<div class="onboarding-list-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Onboarding Candidates</mat-card-title>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" routerLink="/onboarding/templates">
+          <mat-icon>settings</mat-icon> Templates
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filter-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            @for (option of statusOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Department</mat-label>
+          <input matInput formControlName="department" />
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" (click)="applyFilters()">
+            <mat-icon>search</mat-icon> Filter
+          </button>
+          <button mat-button (click)="clearFilters()"><mat-icon>clear</mat-icon> Clear</button>
+        </div>
+      </form>
+
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+
+      <table mat-table [dataSource]="candidates()" class="full-width-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let candidate">
+            <a [routerLink]="['/onboarding', candidate.id]">{{ getFullName(candidate) }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="position">
+          <th mat-header-cell *matHeaderCellDef>Position</th>
+          <td mat-cell *matCellDef="let candidate">{{ candidate.position }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="department">
+          <th mat-header-cell *matHeaderCellDef>Department</th>
+          <td mat-cell *matCellDef="let candidate">{{ candidate.department || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="joiningDate">
+          <th mat-header-cell *matHeaderCellDef>Joining Date</th>
+          <td mat-cell *matCellDef="let candidate">{{ candidate.joiningDate | date }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let candidate">
+            <span class="status-badge" [ngClass]="getStatusClass(candidate.status)">
+              {{ candidate.status }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="progress">
+          <th mat-header-cell *matHeaderCellDef>Progress</th>
+          <td mat-cell *matCellDef="let candidate">
+            <mat-progress-bar
+              mode="determinate"
+              [value]="candidate.checklistProgress"
+            ></mat-progress-bar>
+            <span class="progress-text">{{ candidate.checklistProgress }}%</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let candidate">
+            <button mat-icon-button [routerLink]="['/onboarding', candidate.id]" matTooltip="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            @if (
+              canComplete() && candidate.status !== 'completed' && candidate.status !== 'cancelled'
+            ) {
+              <button
+                mat-icon-button
+                (click)="completeOnboarding(candidate.id)"
+                matTooltip="Complete"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      @if (candidates().length === 0 && !loading()) {
+        <div class="no-data">No onboarding candidates found.</div>
+      }
+
+      @if (total() > limit()) {
+        <mat-paginator
+          [length]="total()"
+          [pageSize]="limit()"
+          (page)="changePage($event.pageIndex + 1)"
+        ></mat-paginator>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

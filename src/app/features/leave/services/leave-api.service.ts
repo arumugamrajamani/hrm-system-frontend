@@ -1,42 +1,27 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import {
   LeaveRequest,
   LeaveBalance,
   LeaveFilter,
   LeavePolicy,
   LeavePolicyFilter,
+  LeaveAccrual,
+  LeaveAccrualRule,
+  LeaveEncashment,
 } from '../models/leave.model';
-
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
-interface ApiResponse<T> {
-  data?: T;
-  success: boolean;
-  message?: string;
-}
+import {
+  ListResponse,
+  DetailResponse,
+  ApiResponse,
+} from '../../../shared/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class LeaveApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/leaves';
+  private readonly baseUrl = `${environment.apiUrl}/leaves`;
 
   list(params: Record<string, unknown>): Observable<ListResponse<LeaveRequest>> {
     let httpParams = new HttpParams();
@@ -122,5 +107,69 @@ export class LeaveApiService {
       employeeId,
       year,
     });
+  }
+
+  getAccruals(
+    params?: Record<string, unknown>,
+  ): Observable<{ data: LeaveAccrual[]; success: boolean }> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get<{ data: LeaveAccrual[]; success: boolean }>(`${this.baseUrl}/accruals`, {
+      params: httpParams,
+    });
+  }
+
+  getAccrualRules(
+    params?: Record<string, unknown>,
+  ): Observable<{ data: LeaveAccrualRule[]; success: boolean }> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get<{ data: LeaveAccrualRule[]; success: boolean }>(
+      `${this.baseUrl}/accrual-rules`,
+      { params: httpParams },
+    );
+  }
+
+  getEncashments(
+    params?: Record<string, unknown>,
+  ): Observable<{ data: LeaveEncashment[]; success: boolean }> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get<{ data: LeaveEncashment[]; success: boolean }>(
+      `${this.baseUrl}/encashments`,
+      { params: httpParams },
+    );
+  }
+
+  approveEncashment(id: number, remarks?: string): Observable<ApiResponse<LeaveEncashment>> {
+    return this.http.post<ApiResponse<LeaveEncashment>>(
+      `${this.baseUrl}/encashments/${id}/approve`,
+      { remarks },
+    );
+  }
+
+  rejectEncashment(id: number, remarks: string): Observable<ApiResponse<LeaveEncashment>> {
+    return this.http.post<ApiResponse<LeaveEncashment>>(
+      `${this.baseUrl}/encashments/${id}/reject`,
+      { remarks },
+    );
   }
 }

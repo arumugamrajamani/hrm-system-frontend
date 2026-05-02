@@ -90,7 +90,7 @@ import { Permission } from '../../../../core/models/rbac.models';
                   </tr>
                 </thead>
                 <tbody>
-                  @for (record of store.records(); track record.id) {
+                  @for (record of store.items(); track record.id) {
                     <tr>
                       <td>{{ record.employeeName || 'N/A' }}</td>
                       <td>{{ record.date | date: 'dd MMM yyyy' }}</td>

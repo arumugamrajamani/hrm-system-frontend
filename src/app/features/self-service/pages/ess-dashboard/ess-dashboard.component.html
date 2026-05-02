@@ -1,0 +1,121 @@
+<div class="ess-dashboard">
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <ng-container *ngIf="!loading && dashboard">
+    <div class="welcome-section">
+      <mat-card class="profile-card">
+        <mat-card-content>
+          <div class="profile-header">
+            <div class="profile-photo">
+              <img
+                *ngIf="dashboard.employee.profilePhoto; else defaultPhoto"
+                [src]="dashboard.employee.profilePhoto"
+                alt="Profile"
+              />
+              <ng-template #defaultPhoto>
+                <div class="default-avatar">{{ dashboard.employee.name.charAt(0) }}</div>
+              </ng-template>
+            </div>
+            <div class="profile-info">
+              <h2>{{ dashboard.employee.name }}</h2>
+              <p class="designation">{{ dashboard.employee.designation }}</p>
+              <p class="department">{{ dashboard.employee.department }}</p>
+              <p class="joining-date">Joined: {{ dashboard.employee.joiningDate | date }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="quick-stats">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon" style="color: #3b82f6">beach_access</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.quickStats.leaveBalance }}</span>
+            <span class="stat-label">Leave Balance</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon" style="color: #f59e0b">pending_actions</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.quickStats.pendingApprovals }}</span>
+            <span class="stat-label">Pending Approvals</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon" style="color: #10b981">check_circle</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.quickStats.timesheetStatus }}</span>
+            <span class="stat-label">Timesheet Status</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon" style="color: #8b5cf6">payments</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.quickStats.nextPayrollDate | date }}</span>
+            <span class="stat-label">Next Payroll</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="actions-grid">
+        <mat-card
+          *ngFor="let action of quickActions"
+          class="action-card"
+          [routerLink]="action.route"
+        >
+          <mat-card-content>
+            <mat-icon [style.color]="action.color">{{ action.icon }}</mat-icon>
+            <span>{{ action.label }}</span>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <div class="recent-activities">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Recent Activities</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="timeline">
+            <div *ngFor="let activity of dashboard.recentActivities" class="timeline-item">
+              <mat-icon [class]="'timeline-icon ' + activity.type">{{
+                getActivityIcon(activity.type)
+              }}</mat-icon>
+              <div class="timeline-content">
+                <h4>{{ activity.title }}</h4>
+                <p>{{ activity.description }}</p>
+                <div class="timeline-meta">
+                  <span class="date">{{ activity.date | date }}</span>
+                  <mat-chip
+                    *ngIf="activity.status"
+                    [style.background]="getStatusColor(activity.status) + '20'"
+                    [style.color]="getStatusColor(activity.status)"
+                  >
+                    {{ activity.status }}
+                  </mat-chip>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+</div>

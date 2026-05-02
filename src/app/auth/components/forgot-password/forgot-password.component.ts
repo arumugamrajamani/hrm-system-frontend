@@ -8,7 +8,7 @@ import { ToasterService, ModalService } from '../../../core/services';
   selector: 'app-forgot-password',
   standalone: false,
   templateUrl: './forgot-password.component.html',
-  styleUrls: ['./forgot-password.component.scss']
+  styleUrls: ['./forgot-password.component.scss'],
 })
 export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
@@ -27,7 +27,7 @@ export class ForgotPasswordComponent {
 
   constructor() {
     this.forgotForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]]
+      email: ['', [Validators.required, Validators.email]],
     });
   }
 
@@ -44,8 +44,8 @@ export class ForgotPasswordComponent {
     this.isLoading.set(true);
     this.email.set(this.forgotForm.value.email);
 
-    this.authApi.requestPasswordReset(this.email()).subscribe({
-      next: (response) => {
+    this.authApi.forgotPassword(this.email()).subscribe({
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.step.set('otp');
@@ -57,7 +57,7 @@ export class ForgotPasswordComponent {
       error: () => {
         this.isLoading.set(false);
         this.modalService.showError('Error', 'Failed to send OTP. Please try again.');
-      }
+      },
     });
   }
 
@@ -110,7 +110,7 @@ export class ForgotPasswordComponent {
         this.isLoading.set(false);
         if (response.success) {
           this.router.navigate(['/auth/reset-password'], {
-            queryParams: { email: this.email(), token: response.data?.token }
+            queryParams: { email: this.email(), token: response.data?.token },
           });
         } else {
           this.markAllWrong();
@@ -121,12 +121,19 @@ export class ForgotPasswordComponent {
         this.isLoading.set(false);
         this.markAllWrong();
         this.modalService.showError('Verification Failed', 'Invalid or expired OTP');
-      }
+      },
     });
   }
 
   private markAllWrong(): void {
-    const newStatus: Array<'correct' | 'wrong' | ''> = ['wrong', 'wrong', 'wrong', 'wrong', 'wrong', 'wrong'];
+    const newStatus: Array<'correct' | 'wrong' | ''> = [
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+      'wrong',
+    ];
     this.otpStatus.set(newStatus);
 
     setTimeout(() => {
@@ -140,8 +147,8 @@ export class ForgotPasswordComponent {
 
     this.isLoading.set(true);
 
-    this.authApi.resendOtp(this.email()).subscribe({
-      next: (response) => {
+    this.authApi.forgotPassword(this.email()).subscribe({
+      next: (response: any) => {
         this.isLoading.set(false);
         if (response.success) {
           this.toaster.success('OTP Sent', 'A new OTP has been sent to your email');
@@ -151,14 +158,14 @@ export class ForgotPasswordComponent {
       error: () => {
         this.isLoading.set(false);
         this.modalService.showError('Error', 'Failed to resend OTP');
-      }
+      },
     });
   }
 
   private startResendCooldown(): void {
     this.resendCooldown.set(60);
     const interval = setInterval(() => {
-      this.resendCooldown.update(v => {
+      this.resendCooldown.update((v) => {
         if (v <= 1) {
           clearInterval(interval);
           return 0;

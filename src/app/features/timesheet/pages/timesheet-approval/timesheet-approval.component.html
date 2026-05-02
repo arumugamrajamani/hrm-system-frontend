@@ -1,0 +1,181 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="page-title">
+        <i class="fas fa-check-circle me-2"></i>
+        Timesheet Approvals
+      </h2>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary" (click)="goBack()">
+        <i class="fas fa-arrow-left me-2"></i>
+        Back
+      </button>
+    </div>
+  </div>
+
+  @if (store.loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  } @else {
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">Pending Approvals</h5>
+      </div>
+      <div class="card-body">
+        @if (approvals().length === 0) {
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>No pending timesheet approvals</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Employee</th>
+                  <th>Week Range</th>
+                  <th>Total Hours</th>
+                  <th>Billable Hours</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (approval of approvals(); track approval) {
+                  <tr>
+                    <td>
+                      <strong>{{ approval.employeeName || 'N/A' }}</strong>
+                    </td>
+                    <td>
+                      {{ approval.weekStart | date: 'dd MMM' }} -
+                      {{ approval.weekEnd | date: 'dd MMM yyyy' }}
+                    </td>
+                    <td>{{ approval.totalHours }} hrs</td>
+                    <td>{{ approval.billableHours || 0 }} hrs</td>
+                    <td>
+                      <span [class]="getStatusBadgeClass(approval.status)">
+                        {{ getStatusLabel(approval.status) }}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-success me-2"
+                        (click)="approveTimesheet(approval)"
+                        [disabled]="approval.status !== 'submitted'"
+                      >
+                        <i class="fas fa-check me-1"></i>
+                        Approve
+                      </button>
+                      <button
+                        class="btn btn-sm btn-danger me-2"
+                        (click)="rejectTimesheet(approval)"
+                        [disabled]="approval.status !== 'submitted'"
+                      >
+                        <i class="fas fa-times me-1"></i>
+                        Reject
+                      </button>
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        (click)="toggleDetails(approval.id)"
+                      >
+                        <i
+                          class="fas"
+                          [class]="showDetails(approval.id) ? 'fa-chevron-up' : 'fa-chevron-down'"
+                        ></i>
+                      </button>
+                    </td>
+                  </tr>
+                  @if (showDetails(approval.id)) {
+                    <tr>
+                      <td colspan="6">
+                        <div class="card bg-light">
+                          <div class="card-body">
+                            <h6>Timesheet Entries</h6>
+                            @if (getTimesheetEntries(approval.timesheetId).length > 0) {
+                              <table class="table table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Project</th>
+                                    <th>Task</th>
+                                    <th>Hours</th>
+                                    <th>Billable</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (
+                                    entry of getTimesheetEntries(approval.timesheetId);
+                                    track entry
+                                  ) {
+                                    <tr>
+                                      <td>{{ entry.date | date: 'dd MMM' }}</td>
+                                      <td>{{ entry.projectName || '-' }}</td>
+                                      <td>{{ entry.taskDescription || '-' }}</td>
+                                      <td>{{ entry.hours }} hrs</td>
+                                      <td>
+                                        @if (entry.isBillable) {
+                                          <i class="fas fa-check text-success"></i>
+                                        } @else {
+                                          <i class="fas fa-times text-muted"></i>
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            } @else {
+                              <p class="text-muted">No entries found</p>
+                            }
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+@if (showRejectModal) {
+  <div class="modal fade show d-block" style="background: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Reject Timesheet</h5>
+          <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+        </div>
+        <form [formGroup]="rejectForm" (ngSubmit)="confirmReject()">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Rejection Reason</label>
+              <textarea
+                class="form-control"
+                formControlName="reason"
+                rows="3"
+                placeholder="Enter reason for rejection..."
+              ></textarea>
+              @if (rejectForm.get('reason')?.invalid && rejectForm.get('reason')?.touched) {
+                <small class="text-danger">Reason is required</small>
+              }
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRejectModal()">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-danger" [disabled]="rejectForm.invalid">
+              Reject Timesheet
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

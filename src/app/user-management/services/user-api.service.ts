@@ -8,24 +8,23 @@ import { ApiResponse, User, PaginationParams, PaginatedResponse } from '../../co
   providedIn: 'root',
 })
 export class UserApiService {
-  private readonly apiUrl = environment.usersApiUrl;
+  private readonly apiUrl = environment.apiUrl + '/users';
 
   constructor(private http: HttpClient) {}
 
-  getUsers(params: PaginationParams): Observable<PaginatedResponse<User>> {
-    let httpParams = new HttpParams()
-      .set('page', params.page.toString())
-      .set('limit', params.limit.toString());
-
-    if (params.sortBy) {
-      httpParams = httpParams.set('sortBy', params.sortBy);
-      httpParams = httpParams.set('sortOrder', params.sortOrder || 'asc');
+  getUsers(params?: PaginationParams): Observable<PaginatedResponse<User>> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.page) httpParams = httpParams.set('page', params.page.toString());
+      if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
+      if (params.sortBy) {
+        httpParams = httpParams.set('sortBy', params.sortBy);
+        httpParams = httpParams.set('sortOrder', params.sortOrder || 'asc');
+      }
+      if (params.search) {
+        httpParams = httpParams.set('search', params.search);
+      }
     }
-
-    if (params.search) {
-      httpParams = httpParams.set('search', params.search);
-    }
-
     return this.http.get<PaginatedResponse<User>>(this.apiUrl, { params: httpParams });
   }
 
@@ -41,27 +40,27 @@ export class UserApiService {
     return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, user);
   }
 
-  updateUserWithFile(id: number, formData: FormData): Observable<ApiResponse<User>> {
-    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, formData);
-  }
-
   deleteUser(id: number): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.apiUrl}/${id}`);
   }
 
-  checkEmailUnique(email: string, excludeId?: number): Observable<ApiResponse<boolean>> {
-    let params = new HttpParams().set('email', email);
-    if (excludeId) {
-      params = params.set('excludeId', excludeId.toString());
-    }
-    return this.http.get<ApiResponse<boolean>>(`${this.apiUrl}/check-email`, { params });
+  updateUserWithFile(id: number, formData: FormData): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, formData);
   }
 
-  checkMobileUnique(mobile: string, excludeId?: number): Observable<ApiResponse<boolean>> {
-    let params = new HttpParams().set('mobile', mobile);
-    if (excludeId) {
-      params = params.set('excludeId', excludeId.toString());
-    }
-    return this.http.get<ApiResponse<boolean>>(`${this.apiUrl}/check-mobile`, { params });
+  activateUser(id: number): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.apiUrl}/${id}/activate`, {});
+  }
+
+  deactivateUser(id: number): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
+
+  getRoles(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/roles`);
+  }
+
+  getUserByEmail(email: string): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/with-email`, { email });
   }
 }

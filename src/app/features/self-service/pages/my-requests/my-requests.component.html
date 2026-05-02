@@ -1,0 +1,352 @@
+<div class="my-requests">
+  <h2>My Requests</h2>
+
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filter-form">
+        <mat-form-field>
+          <mat-label>Request Type</mat-label>
+          <mat-select formControlName="type">
+            <mat-option value="">All</mat-option>
+            <mat-option value="leave">Leave</mat-option>
+            <mat-option value="timesheet">Timesheet</mat-option>
+            <mat-option value="profile">Profile Update</mat-option>
+            <mat-option value="document">Document</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="">All</mat-option>
+            <mat-option value="pending">Pending</mat-option>
+            <mat-option value="approved">Approved</mat-option>
+            <mat-option value="rejected">Rejected</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="start" />
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="end" />
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" (click)="applyFilter()">
+            <mat-icon>search</mat-icon> Filter
+          </button>
+          <button mat-button (click)="clearFilter()"><mat-icon>clear</mat-icon> Clear</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-content>
+      <mat-tab-group (selectedTabChange)="onTabChange($event.index)">
+        <mat-tab label="Leave Requests">
+          <div class="table-container">
+            <table mat-table [dataSource]="leaveRequests" class="full-width">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Leave Type</th>
+                <td mat-cell *matCellDef="let item">{{ item.type }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let item">{{ item.date | date }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="days">
+                <th mat-header-cell *matHeaderCellDef>Days</th>
+                <td mat-cell *matCellDef="let item">{{ item.days }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  <mat-chip
+                    [style.background]="getStatusColor(item.status) + '20'"
+                    [style.color]="getStatusColor(item.status)"
+                  >
+                    {{ item.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let item">{{ item.remarks }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button matTooltip="View" (click)="viewRequest(item)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    matTooltip="Cancel"
+                    *ngIf="item.status === 'pending'"
+                    (click)="cancelRequest(item)"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['type', 'date', 'days', 'status', 'remarks', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  columns: ['type', 'date', 'days', 'status', 'remarks', 'actions']
+                "
+              ></tr>
+            </table>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Timesheets">
+          <div class="table-container">
+            <table mat-table [dataSource]="timesheetRequests" class="full-width">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let item">{{ item.type }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Week Ending</th>
+                <td mat-cell *matCellDef="let item">{{ item.date | date }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="hours">
+                <th mat-header-cell *matHeaderCellDef>Hours</th>
+                <td mat-cell *matCellDef="let item">{{ item.hours }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  <mat-chip
+                    [style.background]="getStatusColor(item.status) + '20'"
+                    [style.color]="getStatusColor(item.status)"
+                  >
+                    {{ item.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let item">{{ item.remarks }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button matTooltip="View"><mat-icon>visibility</mat-icon></button>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['type', 'date', 'hours', 'status', 'remarks', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  columns: ['type', 'date', 'hours', 'status', 'remarks', 'actions']
+                "
+              ></tr>
+            </table>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Profile Updates">
+          <div class="table-container">
+            <table mat-table [dataSource]="profileUpdates" class="full-width">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Field</th>
+                <td mat-cell *matCellDef="let item">{{ item.type }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="current">
+                <th mat-header-cell *matHeaderCellDef>Current</th>
+                <td mat-cell *matCellDef="let item">{{ item.current }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="requested">
+                <th mat-header-cell *matHeaderCellDef>Requested</th>
+                <td mat-cell *matCellDef="let item">{{ item.requested }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let item">{{ item.date | date }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  <mat-chip
+                    [style.background]="getStatusColor(item.status) + '20'"
+                    [style.color]="getStatusColor(item.status)"
+                  >
+                    {{ item.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let item">{{ item.remarks }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button matTooltip="View"><mat-icon>visibility</mat-icon></button>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="[
+                  'type',
+                  'current',
+                  'requested',
+                  'date',
+                  'status',
+                  'remarks',
+                  'actions',
+                ]"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  columns: ['type', 'current', 'requested', 'date', 'status', 'remarks', 'actions']
+                "
+              ></tr>
+            </table>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Documents">
+          <div class="table-container">
+            <table mat-table [dataSource]="documentRequests" class="full-width">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Document</th>
+                <td mat-cell *matCellDef="let item">{{ item.type }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Requested Date</th>
+                <td mat-cell *matCellDef="let item">{{ item.date | date }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  <mat-chip
+                    [style.background]="getStatusColor(item.status) + '20'"
+                    [style.color]="getStatusColor(item.status)"
+                  >
+                    {{ item.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let item">{{ item.remarks }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button matTooltip="View"><mat-icon>visibility</mat-icon></button>
+                  <button mat-icon-button matTooltip="Download" *ngIf="item.status === 'approved'">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['type', 'date', 'status', 'remarks', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: ['type', 'date', 'status', 'remarks', 'actions']"
+              ></tr>
+            </table>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Other">
+          <div class="table-container">
+            <table mat-table [dataSource]="otherRequests" class="full-width">
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Request Type</th>
+                <td mat-cell *matCellDef="let item">{{ item.type }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let item">{{ item.date | date }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let item">
+                  <mat-chip
+                    [style.background]="getStatusColor(item.status) + '20'"
+                    [style.color]="getStatusColor(item.status)"
+                  >
+                    {{ item.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let item">{{ item.remarks }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-icon-button matTooltip="View"><mat-icon>visibility</mat-icon></button>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['type', 'date', 'status', 'remarks', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: ['type', 'date', 'status', 'remarks', 'actions']"
+              ></tr>
+            </table>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

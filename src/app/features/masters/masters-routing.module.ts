@@ -24,6 +24,23 @@ const routes: Routes = [
         loadChildren: () => import('./location/location.module').then((m) => m.LocationModule),
       },
       {
+        path: 'companies',
+        loadChildren: () => import('./company/company.module').then((m) => m.CompanyModule),
+      },
+      {
+        path: 'grades',
+        loadChildren: () => import('./grade/grade.module').then((m) => m.GradeModule),
+      },
+      {
+        path: 'employment-types',
+        loadChildren: () =>
+          import('./employment-type/employment-type.module').then((m) => m.EmploymentTypeModule),
+      },
+      {
+        path: 'shifts',
+        loadChildren: () => import('./shift/shift.module').then((m) => m.ShiftModule),
+      },
+      {
         path: 'educations',
         loadChildren: () => import('./education/education.module').then((m) => m.EducationModule),
       },

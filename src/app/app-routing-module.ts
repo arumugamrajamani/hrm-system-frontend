@@ -72,6 +72,30 @@ const routes: Routes = [
             (m) => m.NotificationsPageModule,
           ),
       },
+      {
+        path: 'onboarding',
+        loadChildren: () =>
+          import('./features/onboarding/onboarding.module').then((m) => m.OnboardingModule),
+      },
+      {
+        path: 'approvals',
+        loadChildren: () =>
+          import('./features/approvals/approvals.module').then((m) => m.ApprovalsModule),
+      },
+      {
+        path: 'audit',
+        loadChildren: () => import('./features/audit/audit.module').then((m) => m.AuditModule),
+      },
+      {
+        path: 'self-service',
+        loadChildren: () =>
+          import('./features/self-service/self-service.module').then((m) => m.SelfServiceModule),
+      },
+      {
+        path: 'performance',
+        loadChildren: () =>
+          import('./features/performance/performance.module').then((m) => m.PerformanceModule),
+      },
     ],
   },
   {

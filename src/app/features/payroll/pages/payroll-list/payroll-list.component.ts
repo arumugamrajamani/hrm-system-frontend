@@ -208,7 +208,10 @@ export class PayrollListComponent implements OnInit {
     const classes: Record<PayrollStatus, string> = {
       [PayrollStatus.DRAFT]: 'bg-secondary',
       [PayrollStatus.PROCESSING]: 'bg-warning',
+      [PayrollStatus.PREVIEW]: 'bg-info',
       [PayrollStatus.APPROVED]: 'bg-success',
+      [PayrollStatus.RELEASED]: 'bg-primary',
+      [PayrollStatus.LOCKED]: 'bg-dark',
       [PayrollStatus.PAID]: 'bg-primary',
     };
     return classes[status] || 'bg-secondary';
@@ -225,9 +228,9 @@ export class PayrollListComponent implements OnInit {
     const month = new Date().getMonth() + 1;
     const year = new Date().getFullYear();
     if (confirm(`Create payroll run for ${this.getMonthName(month)} ${year}?`)) {
-      this.store.createRun(month, year).subscribe({
-        next: (response) => {
-          if (response.success) {
+      this.store.createRun({ month, year }).subscribe({
+        next: (response: any) => {
+          if (response && response.success) {
             alert('Payroll run created successfully');
           }
         },

@@ -1,15 +1,25 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, switchMap, filter, map } from 'rxjs';
 import { TimesheetStore } from '../../services/timesheet.store';
 import { TimesheetApiService } from '../../services/timesheet-api.service';
 import {
   Timesheet,
   TimesheetEntry,
+  TimesheetEntryWithDetails,
   TimesheetStatus,
   getTimesheetStatusLabel,
+  TimesheetProject,
+  TimesheetTask,
 } from '../../models/timesheet.model';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { Permission } from '../../../../core/models/rbac.models';
@@ -84,9 +94,12 @@ import { Permission } from '../../../../core/models/rbac.models';
                         <thead class="table-light">
                           <tr>
                             <th>Date</th>
+                            <th>Project</th>
+                            <th>Task</th>
                             <th>Hours</th>
                             <th>Task Description</th>
                             <th>Billable</th>
+                            <th>Client</th>
                             @if (!isViewMode) {
                               <th></th>
                             }
@@ -102,6 +115,35 @@ import { Permission } from '../../../../core/models/rbac.models';
                                   formControlName="date"
                                   [disabled]="isViewMode"
                                 />
+                              </td>
+                              <td style="min-width: 180px;">
+                                <select
+                                  class="form-select form-select-sm"
+                                  formControlName="projectId"
+                                  (change)="onProjectChange(i)"
+                                  [disabled]="isViewMode"
+                                >
+                                  <option [value]="null">-- Select Project --</option>
+                                  @for (project of projects(); track project) {
+                                    <option [value]="project.id">
+                                      {{ project.name }} ({{ project.code }})
+                                    </option>
+                                  }
+                                </select>
+                              </td>
+                              <td style="min-width: 180px;">
+                                <select
+                                  class="form-select form-select-sm"
+                                  formControlName="taskId"
+                                  [disabled]="
+                                    isViewMode || !entriesArray.at(i).get('projectId')?.value
+                                  "
+                                >
+                                  <option [value]="null">-- Select Task --</option>
+                                  @for (task of filteredTasks(); track task) {
+                                    <option [value]="task.id">{{ task.name }}</option>
+                                  }
+                                </select>
                               </td>
                               <td>
                                 <input
@@ -123,12 +165,15 @@ import { Permission } from '../../../../core/models/rbac.models';
                                   [disabled]="isViewMode"
                                 />
                               </td>
-                              <td>
+                              <td class="text-center">
                                 <input
                                   type="checkbox"
                                   formControlName="isBillable"
                                   [disabled]="isViewMode"
                                 />
+                              </td>
+                              <td class="small text-muted">
+                                {{ getClientName(entriesArray.at(i).get('projectId')?.value) }}
                               </td>
                               @if (!isViewMode) {
                                 <td>
@@ -293,6 +338,10 @@ export class TimesheetEntryComponent implements OnInit {
   isViewMode = false;
   timesheetId: number | null = null;
 
+  projects = signal<TimesheetProject[]>([]);
+  tasks = signal<TimesheetTask[]>([]);
+  filteredTasks = signal<TimesheetTask[]>([]);
+
   readonly Permission = Permission;
   readonly getStatusLabel = getTimesheetStatusLabel;
 
@@ -320,6 +369,7 @@ export class TimesheetEntryComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadProjects();
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (params['id']) {
         this.timesheetId = +params['id'];
@@ -335,13 +385,68 @@ export class TimesheetEntryComponent implements OnInit {
     });
   }
 
-  private createEntry(date = ''): FormGroup {
+  private createEntry(entry?: TimesheetEntryWithDetails, date = ''): FormGroup {
+    const projectId = entry?.projectId ?? null;
+    if (projectId) {
+      this.filterTasksByProject(projectId);
+    }
     return this.fb.group({
-      date: [date || this.getDefaultDate(), Validators.required],
-      hours: ['', [Validators.required, Validators.min(0), Validators.max(24)]],
-      taskDescription: ['', Validators.required],
-      isBillable: [false],
+      date: [entry?.date || date || this.getDefaultDate(), Validators.required],
+      hours: [entry?.hours || '', [Validators.required, Validators.min(0), Validators.max(24)]],
+      projectId: [projectId],
+      taskId: [entry?.taskId ?? null],
+      taskDescription: [entry?.taskDescription || '', Validators.required],
+      isBillable: [entry?.isBillable ?? false],
     });
+  }
+
+  private loadProjects(): void {
+    this.api.getProjects().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.projects.set(response.data);
+        }
+      },
+    });
+  }
+
+  onProjectChange(entryIndex: number): void {
+    const entryGroup = this.entriesArray.at(entryIndex) as FormGroup;
+    const projectId = entryGroup.get('projectId')?.value;
+    if (projectId) {
+      this.filterTasksByProject(projectId);
+      this.loadTasksForProject(projectId);
+      const project = this.projects().find((p) => p.id === +projectId);
+      if (project) {
+        entryGroup.patchValue({
+          isBillable: project.isBillable,
+          taskId: null,
+        });
+      }
+    } else {
+      this.filteredTasks.set([]);
+    }
+  }
+
+  private filterTasksByProject(projectId: number): void {
+    this.filteredTasks.set(this.tasks().filter((t) => t.projectId === +projectId));
+  }
+
+  private loadTasksForProject(projectId: number): void {
+    this.api.getTasksByProject(projectId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.tasks.set(response.data);
+          this.filteredTasks.set(response.data);
+        }
+      },
+    });
+  }
+
+  getClientName(projectId: number | null): string {
+    if (!projectId) return '';
+    const project = this.projects().find((p) => p.id === +projectId);
+    return project?.clientName || '';
   }
 
   private getDefaultDate(): string {
@@ -370,14 +475,7 @@ export class TimesheetEntryComponent implements OnInit {
     this.entriesArray.clear();
     if (timesheet.entries && timesheet.entries.length > 0) {
       timesheet.entries.forEach((entry) => {
-        this.entriesArray.push(
-          this.fb.group({
-            date: [entry.date],
-            hours: [entry.hours],
-            taskDescription: [entry.taskDescription],
-            isBillable: [entry.isBillable],
-          }),
-        );
+        this.entriesArray.push(this.createEntry(entry as TimesheetEntryWithDetails));
       });
     } else {
       this.entriesArray.push(this.createEntry());

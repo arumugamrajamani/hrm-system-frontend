@@ -9,43 +9,36 @@ import {
   LeaveStatus,
   LeavePolicy,
   LeavePolicyFilter,
+  LeaveAccrual,
+  LeaveAccrualRule,
+  LeaveEncashment,
 } from '../models/leave.model';
 import { RbacService } from '../../../core/services/rbac.service';
 import { Permission } from '../../../core/models/rbac.models';
+import { BaseStore } from '../../../core/stores/base.store';
 
 @Injectable({ providedIn: 'root' })
-export class LeaveStore {
+export class LeaveStore extends BaseStore<LeaveRequest> {
   private readonly api = inject(LeaveApiService);
   private readonly rbacService = inject(RbacService);
 
-  private readonly _leaveRequests = signal<LeaveRequest[]>([]);
   private readonly _leaveBalances = signal<LeaveBalance[]>([]);
   private readonly _policies = signal<LeavePolicy[]>([]);
   private readonly _selectedRequest = signal<LeaveRequest | null>(null);
-  private readonly _loading = signal<boolean>(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _filters = signal<LeaveFilter>({});
   private readonly _policyFilters = signal<LeavePolicyFilter>({});
-  private readonly _pagination = signal({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
+  private readonly _accruals = signal<LeaveAccrual[]>([]);
+  private readonly _accrualRules = signal<LeaveAccrualRule[]>([]);
+  private readonly _encashments = signal<LeaveEncashment[]>([]);
 
-  readonly leaveRequests = this._leaveRequests.asReadonly();
   readonly leaveBalances = this._leaveBalances.asReadonly();
   readonly policies = this._policies.asReadonly();
   readonly selectedRequest = this._selectedRequest.asReadonly();
-  readonly loading = this._loading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly filters = this._filters.asReadonly();
-  readonly pagination = this._pagination.asReadonly();
+  readonly policyFilters = this._policyFilters.asReadonly();
+  readonly accruals = this._accruals.asReadonly();
+  readonly accrualRules = this._accrualRules.asReadonly();
+  readonly encashments = this._encashments.asReadonly();
 
-  readonly page = computed(() => this._pagination().page);
-  readonly limit = computed(() => this._pagination().limit);
-  readonly total = computed(() => this._pagination().total);
-  readonly hasData = computed(() => this._leaveRequests().length > 0);
+  override readonly hasData = computed(() => this.items().length > 0);
 
   readonly canCreate = computed(() => this.rbacService.hasPermission(Permission.CREATE));
   readonly canApprove = computed(() => this.rbacService.hasPermission(Permission.EDIT));
@@ -57,113 +50,104 @@ export class LeaveStore {
   );
 
   loadLeaveRequests(params?: Partial<LeaveFilter & { page: number; limit: number }>): void {
-    this._loading.set(true);
+    this.setLoading(true);
     this._error.set(null);
 
     const queryParams = {
-      ...this._filters(),
-      page: params?.page || this._pagination().page,
-      limit: params?.limit || this._pagination().limit,
+      ...this.filters(),
+      page: params?.page || this.page(),
+      limit: params?.limit || this.limit(),
       ...params,
     };
 
     this.api.list(queryParams).subscribe({
       next: (response) => {
         if (response.success) {
-          this._leaveRequests.set(response.data || []);
-          if (response.pagination) {
-            this._pagination.set({
-              page: response.pagination.page,
-              limit: response.pagination.limit,
-              total: response.pagination.total,
-              totalPages: response.pagination.totalPages,
-            });
-          }
+          this.setItems(response.data || []);
+          this.updatePaginationResponse(response);
         } else {
-          this._error.set(response.message || 'Failed to load leave requests');
+          this.setError(response.message || 'Failed to load leave requests');
         }
-        this._loading.set(false);
+        this.setLoading(false);
       },
       error: (err) => {
-        this._error.set(err.error?.message || 'An error occurred');
-        this._loading.set(false);
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
       },
     });
   }
 
   loadLeaveBalances(employeeId?: number): void {
-    this._loading.set(true);
+    this.setLoading(true);
     this.api.getBalances(employeeId).subscribe({
       next: (response) => {
         if (response.success) {
           this._leaveBalances.set(response.data || []);
         }
-        this._loading.set(false);
+        this.setLoading(false);
       },
       error: () => {
-        this._loading.set(false);
+        this.setLoading(false);
       },
     });
   }
 
   loadPendingApprovals(): void {
-    this._loading.set(true);
+    this.setLoading(true);
     this.api.getPendingApprovals().subscribe({
       next: (response) => {
         if (response.success) {
-          this._leaveRequests.set(response.data || []);
+          this.setItems(response.data || []);
         }
-        this._loading.set(false);
+        this.setLoading(false);
       },
       error: () => {
-        this._loading.set(false);
+        this.setLoading(false);
       },
     });
   }
 
   createRequest(data: Partial<LeaveRequest>): Observable<any> {
-    this._loading.set(true);
+    this.setLoading(true);
     return this.api.create(data).pipe(
       tap((response) => {
-        if (!response.success) {
-          this._error.set(response.message || 'Failed to create leave request');
+        if (response.success && response.data) {
+          this.addItemToList(response.data as LeaveRequest);
+        } else {
+          this.setError(response.message || 'Failed to create leave request');
         }
       }),
       catchError((err) => {
-        this._error.set(err.error?.message || 'An error occurred');
+        this.setError(err.error?.message || 'An error occurred');
         return of({ success: false, message: err.error?.message });
       }),
-      finalize(() => this._loading.set(false)),
+      finalize(() => this.setLoading(false)),
     );
   }
 
   approveRequest(id: number, comments?: string): Observable<any> {
-    this._loading.set(true);
+    this.setLoading(true);
     return this.api.approve(id, comments).pipe(
       tap((response) => {
         if (response.success) {
-          this._leaveRequests.update((list) =>
-            list.map((r) => (r.id === id ? { ...r, status: LeaveStatus.APPROVED } : r)),
-          );
+          this.updateItemInList({ id, status: LeaveStatus.APPROVED } as LeaveRequest);
         }
       }),
       catchError((err) => of({ success: false, message: err.error?.message })),
-      finalize(() => this._loading.set(false)),
+      finalize(() => this.setLoading(false)),
     );
   }
 
   rejectRequest(id: number, comments: string): Observable<any> {
-    this._loading.set(true);
+    this.setLoading(true);
     return this.api.reject(id, comments).pipe(
       tap((response) => {
         if (response.success) {
-          this._leaveRequests.update((list) =>
-            list.map((r) => (r.id === id ? { ...r, status: LeaveStatus.REJECTED } : r)),
-          );
+          this.updateItemInList({ id, status: LeaveStatus.REJECTED } as LeaveRequest);
         }
       }),
       catchError((err) => of({ success: false, message: err.error?.message })),
-      finalize(() => this._loading.set(false)),
+      finalize(() => this.setLoading(false)),
     );
   }
 
@@ -171,59 +155,57 @@ export class LeaveStore {
     return this.api.cancel(id).pipe(
       tap((response) => {
         if (response.success) {
-          this._leaveRequests.update((list) =>
-            list.map((r) => (r.id === id ? { ...r, status: LeaveStatus.CANCELLED } : r)),
-          );
+          this.updateItemInList({ id, status: LeaveStatus.CANCELLED } as LeaveRequest);
         }
       }),
     );
   }
 
-  setFilters(filters: LeaveFilter): void {
-    this._filters.set(filters);
+  override setFilters(filters: LeaveFilter): void {
+    super.setFilters(filters as Record<string, unknown>);
     this.loadLeaveRequests({ ...filters, page: 1 });
   }
 
   clearFilters(): void {
-    this._filters.set({});
+    this.resetFilters();
     this.loadLeaveRequests();
   }
 
   loadPolicies(params?: Partial<LeavePolicyFilter>): void {
-    this._loading.set(true);
+    this.setLoading(true);
     this.api.listPolicies(params).subscribe({
       next: (response) => {
         if (response.success) {
           this._policies.set(response.data || []);
         }
-        this._loading.set(false);
+        this.setLoading(false);
       },
       error: () => {
-        this._loading.set(false);
+        this.setLoading(false);
       },
     });
   }
 
   createPolicy(data: Partial<LeavePolicy>): Observable<any> {
-    this._loading.set(true);
+    this.setLoading(true);
     return this.api.createPolicy(data).pipe(
       tap((response) => {
-        if (response.success) {
+        if (response.success && response.data) {
           this._policies.update((list) => [...list, response.data]);
         } else {
-          this._error.set(response.message || 'Failed to create policy');
+          this.setError(response.message || 'Failed to create policy');
         }
       }),
       catchError((err) => {
-        this._error.set(err.error?.message || 'An error occurred');
+        this.setError(err.error?.message || 'An error occurred');
         return of({ success: false, message: err.error?.message });
       }),
-      finalize(() => this._loading.set(false)),
+      finalize(() => this.setLoading(false)),
     );
   }
 
   updatePolicy(id: number, data: Partial<LeavePolicy>): Observable<any> {
-    this._loading.set(true);
+    this.setLoading(true);
     return this.api.updatePolicy(id, data).pipe(
       tap((response) => {
         if (response.success) {
@@ -231,7 +213,7 @@ export class LeaveStore {
         }
       }),
       catchError((err) => of({ success: false, message: err.error?.message })),
-      finalize(() => this._loading.set(false)),
+      finalize(() => this.setLoading(false)),
     );
   }
 
@@ -245,13 +227,107 @@ export class LeaveStore {
     );
   }
 
-  reset(): void {
-    this._leaveRequests.set([]);
+  override reset(): void {
+    super.reset();
     this._leaveBalances.set([]);
     this._selectedRequest.set(null);
-    this._loading.set(false);
-    this._error.set(null);
-    this._filters.set({});
-    this._pagination.set({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  }
+
+  loadAccruals(params?: {
+    employeeId?: number;
+    leaveTypeId?: number;
+    fromDate?: string;
+    toDate?: string;
+  }): void {
+    this.setLoading(true);
+    this.api.getAccruals(params).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this._accruals.set(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: () => {
+        this.setLoading(false);
+      },
+    });
+  }
+
+  loadAccrualRules(params?: { leaveTypeId?: number; isActive?: boolean }): void {
+    this.setLoading(true);
+    this.api.getAccrualRules(params).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this._accrualRules.set(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: () => {
+        this.setLoading(false);
+      },
+    });
+  }
+
+  loadEncashments(params?: { employeeId?: number; leaveTypeId?: number; status?: string }): void {
+    this.setLoading(true);
+    this.api.getEncashments(params).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this._encashments.set(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: () => {
+        this.setLoading(false);
+      },
+    });
+  }
+
+  approveEncashment(id: number, remarks?: string): Observable<any> {
+    this.setLoading(true);
+    return this.api.approveEncashment(id, remarks).pipe(
+      tap((response) => {
+        if (response.success) {
+          this._encashments.update((list) =>
+            list.map((e) =>
+              e.id === id
+                ? {
+                    ...e,
+                    status: 'approved' as const,
+                    processedDate: new Date().toISOString().split('T')[0],
+                    remarks: remarks || e.remarks,
+                  }
+                : e,
+            ),
+          );
+        }
+      }),
+      catchError((err) => of({ success: false, message: err.error?.message })),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  rejectEncashment(id: number, remarks: string): Observable<any> {
+    this.setLoading(true);
+    return this.api.rejectEncashment(id, remarks).pipe(
+      tap((response) => {
+        if (response.success) {
+          this._encashments.update((list) =>
+            list.map((e) =>
+              e.id === id
+                ? {
+                    ...e,
+                    status: 'rejected' as const,
+                    processedDate: new Date().toISOString().split('T')[0],
+                    remarks,
+                  }
+                : e,
+            ),
+          );
+        }
+      }),
+      catchError((err) => of({ success: false, message: err.error?.message })),
+      finalize(() => this.setLoading(false)),
+    );
   }
 }

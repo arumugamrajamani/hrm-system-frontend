@@ -1,24 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Timesheet, TimesheetFilter, TimesheetStatus } from '../models/timesheet.model';
-
-interface ListResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
-}
-
-interface DetailResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
+import { environment } from '../../../../environments/environment';
+import {
+  Timesheet,
+  TimesheetFilter,
+  TimesheetStatus,
+  TimesheetProject,
+  TimesheetTask,
+  TimesheetApproval,
+} from '../models/timesheet.model';
+import { ListResponse, DetailResponse } from '../../../shared/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class TimesheetApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/timesheets';
+  private readonly baseUrl = `${environment.apiUrl}/timesheets`;
 
   list(params?: Record<string, unknown>): Observable<ListResponse<Timesheet>> {
     return this.http.get<ListResponse<Timesheet>>(this.baseUrl, { params: params as any });
@@ -56,5 +53,23 @@ export class TimesheetApiService {
 
   reject(id: number, comments: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/${id}/reject`, { comments });
+  }
+
+  getProjects(): Observable<ListResponse<TimesheetProject>> {
+    return this.http.get<ListResponse<TimesheetProject>>(`${environment.apiUrl}/projects`);
+  }
+
+  getTasksByProject(projectId: number): Observable<ListResponse<TimesheetTask>> {
+    return this.http.get<ListResponse<TimesheetTask>>(
+      `${environment.apiUrl}/projects/${projectId}/tasks`,
+    );
+  }
+
+  getPendingApprovals(): Observable<ListResponse<TimesheetApproval>> {
+    return this.http.get<ListResponse<TimesheetApproval>>(`${this.baseUrl}/pending-approvals`);
+  }
+
+  getTimesheetDetails(timesheetId: number): Observable<DetailResponse<Timesheet>> {
+    return this.http.get<DetailResponse<Timesheet>>(`${this.baseUrl}/${timesheetId}`);
   }
 }
