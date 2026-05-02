@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ViewChild, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { ShiftStore } from '../../services/shift.store';
+import { ShiftApiService } from '../../services/shift-api.service';
 import { Shift } from '../../models/shift.model';
 import { Permission } from '../../../../../core/models/rbac.models';
 import { LoadingSkeletonComponent } from '../../../../../shared/components/loading-skeleton/loading-skeleton.component';
@@ -25,7 +26,7 @@ import { ToasterService, ModalService } from '../../../../../core/services';
           </h2>
         </div>
         <div class="col-auto">
-          @if (store.canCreate()) {
+          @if (this.store.canCreate()) {
             <button class="btn btn-primary" (click)="navigateToAdd()">
               <i class="fas fa-plus me-2"></i>
               Add Shift
@@ -184,7 +185,7 @@ import { ToasterService, ModalService } from '../../../../../core/services';
                           <i class="fas fa-check"></i>
                         }
                       </button>
-                      @if (store.canDelete()) {
+                      @if (this.store.canDelete()) {
                         <button
                           class="btn-action btn-delete ms-1"
                           (click)="onDelete(shift)"
@@ -216,9 +217,9 @@ import { ToasterService, ModalService } from '../../../../../core/services';
 
               <mat-paginator
                 [pageSizeOptions]="[10, 25, 50, 100]"
-                [pageSize]="store.pagination().limit"
-                [length]="store.pagination().total"
-                [pageIndex]="store.pagination().page - 1"
+                [pageSize]="pageSize()"
+                [length]="totalElements()"
+                [pageIndex]="currentPage() - 1"
                 (page)="onPageChange($event.pageIndex + 1); onPageSizeChange($event.pageSize)"
                 showFirstLastButtons
               >
@@ -232,6 +233,7 @@ import { ToasterService, ModalService } from '../../../../../core/services';
 })
 export class ShiftListComponent implements OnInit {
   readonly store = inject(ShiftStore);
+  readonly shiftApi = inject(ShiftApiService);
   readonly Math = Math;
   private router = inject(Router);
   private toasterService = inject(ToasterService);
@@ -263,13 +265,52 @@ export class ShiftListComponent implements OnInit {
   searchTerm = signal<string>('');
   statusFilter = signal<string>('');
   flexibleFilter = signal<boolean | null>(null);
+  isLoading = signal(false);
   skeletonRows = Array(5).fill(0);
+
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalElements = signal<number>(0);
+  totalPages = signal<number>(0);
 
   readonly Permission = Permission;
 
   ngOnInit(): void {
-    this.store.loadShifts();
+    this.loadShifts();
     this.setupSearchDebounce();
+  }
+
+  private loadShifts(): void {
+    this.isLoading.set(true);
+    const params = {
+      page: this.store.pagination().page,
+      limit: this.store.pagination().limit,
+      search: this.searchTerm(),
+      status: this.statusFilter() || undefined,
+      isFlexible: this.flexibleFilter() || undefined,
+    };
+
+    this.shiftApi.list(params).subscribe({
+      next: (response: any) => {
+        console.log('Shift API Response:', response);
+        if (response?.data && Array.isArray(response.data)) {
+          this.dataSource.data = response.data;
+          // Update store with pagination if available
+          if (response.meta?.pagination) {
+            this.store.loadShifts(); // Refresh store
+          }
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private setupSearchDebounce(): void {

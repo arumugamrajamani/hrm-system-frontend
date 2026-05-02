@@ -154,20 +154,42 @@ export class EmploymentTypeStore {
     );
   }
 
-  toggleStatus(id: number): Observable<any> {
+  activate(id: number): Observable<any> {
     const item = this._employmentTypes().find((d) => d.id === id);
     if (!item) return of({ success: false, message: 'Employment type not found' });
 
-    const newStatus = item.status === 'active' ? 'inactive' : 'active';
     this._loading.set(true);
-    return this.api.updateStatus(id, newStatus).pipe(
+    return this.api.activate(id).pipe(
       tap((response) => {
         if (response.success) {
           this._employmentTypes.update((list) =>
-            list.map((d) => (d.id === id ? { ...d, status: newStatus } : d)),
+            list.map((d) => (d.id === id ? { ...d, status: 'active' as const } : d)),
           );
         } else {
-          this._error.set(response.message || 'Failed to update status');
+          this._error.set(response.message || 'Failed to activate');
+        }
+      }),
+      catchError((err) => {
+        this._error.set(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this._loading.set(false)),
+    );
+  }
+
+  deactivate(id: number): Observable<any> {
+    const item = this._employmentTypes().find((d) => d.id === id);
+    if (!item) return of({ success: false, message: 'Employment type not found' });
+
+    this._loading.set(true);
+    return this.api.deactivate(id).pipe(
+      tap((response) => {
+        if (response.success) {
+          this._employmentTypes.update((list) =>
+            list.map((d) => (d.id === id ? { ...d, status: 'inactive' as const } : d)),
+          );
+        } else {
+          this._error.set(response.message || 'Failed to deactivate');
         }
       }),
       catchError((err) => {

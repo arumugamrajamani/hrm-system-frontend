@@ -63,6 +63,7 @@ export class ShiftApiService {
     return this.http.get<any>(this.baseUrl, { params: httpParams }).pipe(
       map((response) => {
         // API returns: {success, data: [rawApiShifts], meta: {pagination}}
+        console.log('Raw API Response:', response);
         const rawData = response?.data || [];
         const shifts = rawData.map((item: ApiShift) => this.mapApiToShift(item));
 

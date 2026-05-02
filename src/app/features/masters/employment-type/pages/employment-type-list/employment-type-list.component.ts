@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { EmploymentTypeStore } from '../../services/employment-type.store';
 import { EmploymentType } from '../../models/employment-type.model';
 import { Permission } from '../../../../../core/models/rbac.models';
@@ -60,17 +60,6 @@ import { ToasterService, ModalService } from '../../../../../core/services';
             <option value="inactive">Inactive</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <select
-            class="form-select"
-            [ngModel]="permanentFilter()"
-            (ngModelChange)="onPermanentChange($event)"
-          >
-            <option value="">All Types</option>
-            <option [ngValue]="true">Permanent</option>
-            <option [ngValue]="false">Contract</option>
-          </select>
-        </div>
       </div>
 
       @if (store.loading()) {
@@ -79,7 +68,7 @@ import { ToasterService, ModalService } from '../../../../../core/services';
             @for (row of skeletonRows; track $index) {
               <app-loading-skeleton
                 type="table-row"
-                [columns]="['200px', '100px', '100px', '120px', '120px', '100px', '80px', '100px']"
+                [columns]="['200px', '100px', '100px', '180px', '100px']"
               ></app-loading-skeleton>
             }
           </div>
@@ -117,27 +106,6 @@ import { ToasterService, ModalService } from '../../../../../core/services';
                     </td>
                   </ng-container>
 
-                  <ng-container matColumnDef="isPermanent">
-                    <th mat-header-cell *matHeaderCellDef>Type</th>
-                    <td mat-cell *matCellDef="let emp">
-                      @if (emp.isPermanent) {
-                        <span class="badge bg-primary">Permanent</span>
-                      } @else {
-                        <span class="badge bg-warning">Contract</span>
-                      }
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="probationMonths">
-                    <th mat-header-cell *matHeaderCellDef>Probation (Months)</th>
-                    <td mat-cell *matCellDef="let emp">{{ emp.probationMonths || '-' }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="noticePeriodDays">
-                    <th mat-header-cell *matHeaderCellDef>Notice Period (Days)</th>
-                    <td mat-cell *matCellDef="let emp">{{ emp.noticePeriodDays || '-' }}</td>
-                  </ng-container>
-
                   <ng-container matColumnDef="status">
                     <th mat-header-cell *matHeaderCellDef>Status</th>
                     <td mat-cell *matCellDef="let emp">
@@ -149,9 +117,11 @@ import { ToasterService, ModalService } from '../../../../../core/services';
                     </td>
                   </ng-container>
 
-                  <ng-container matColumnDef="employeeCount">
-                    <th mat-header-cell *matHeaderCellDef>Employees</th>
-                    <td mat-cell *matCellDef="let emp">{{ emp.employeeCount || 0 }}</td>
+                  <ng-container matColumnDef="created_at">
+                    <th mat-header-cell *matHeaderCellDef>Created At</th>
+                    <td mat-cell *matCellDef="let emp">
+                      {{ emp.created_at ? (emp.created_at | date: 'mediumDate') : '-' }}
+                    </td>
                   </ng-container>
 
                   <ng-container matColumnDef="actions">
@@ -166,19 +136,23 @@ import { ToasterService, ModalService } from '../../../../../core/services';
                           <i class="fas fa-pencil-alt"></i>
                         </button>
                       }
-                      <button
-                        class="btn-action me-1"
-                        [class.btn-toggle-active]="emp.status === 'active'"
-                        [class.btn-toggle-inactive]="emp.status === 'inactive'"
-                        (click)="onToggleStatus(emp)"
-                        [title]="emp.status === 'active' ? 'Deactivate' : 'Activate'"
-                      >
-                        @if (emp.status === 'active') {
+                      @if (emp.status === 'active') {
+                        <button
+                          class="btn-action btn-toggle-inactive me-1"
+                          (click)="onDeactivate(emp)"
+                          title="Deactivate"
+                        >
                           <i class="fas fa-ban"></i>
-                        } @else {
+                        </button>
+                      } @else {
+                        <button
+                          class="btn-action btn-toggle-active me-1"
+                          (click)="onActivate(emp)"
+                          title="Activate"
+                        >
                           <i class="fas fa-check"></i>
-                        }
-                      </button>
+                        </button>
+                      }
                       @if (store.canDelete()) {
                         <button
                           class="btn-action btn-delete ms-1"
@@ -227,48 +201,32 @@ import { ToasterService, ModalService } from '../../../../../core/services';
 })
 export class EmploymentTypeListComponent implements OnInit {
   readonly store = inject(EmploymentTypeStore);
-  readonly Math = Math;
   private router = inject(Router);
   private toasterService = inject(ToasterService);
   private modalService = inject(ModalService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
-  private paginator?: MatPaginator;
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
 
-  @ViewChild(MatPaginator)
-  set matPaginator(paginator: MatPaginator | undefined) {
-    if (!paginator) return;
-    this.paginator = paginator;
-  }
-
-  displayedColumns = [
-    'name',
-    'code',
-    'isPermanent',
-    'probationMonths',
-    'noticePeriodDays',
-    'status',
-    'employeeCount',
-    'actions',
-  ];
+  displayedColumns = ['name', 'code', 'status', 'created_at', 'actions'];
   dataSource = new MatTableDataSource<EmploymentType>([]);
 
   searchTerm = signal<string>('');
   statusFilter = signal<string>('');
-  permanentFilter = signal<boolean | ''>('');
   skeletonRows = Array(5).fill(0);
 
   readonly Permission = Permission;
 
+  constructor() {
+    effect(() => {
+      this.dataSource.data = this.store.employmentTypes();
+    });
+  }
+
   ngOnInit(): void {
     this.store.loadEmploymentTypes();
     this.setupSearchDebounce();
-    this.loadDataSource();
-  }
-
-  private loadDataSource(): void {
-    this.dataSource.data = this.store.employmentTypes();
   }
 
   private setupSearchDebounce(): void {
@@ -286,12 +244,10 @@ export class EmploymentTypeListComponent implements OnInit {
 
   onStatusChange(value: string): void {
     this.statusFilter.set(value);
-    this.store.loadEmploymentTypes({ status: value as any, page: 1 });
-  }
-
-  onPermanentChange(value: boolean | ''): void {
-    this.permanentFilter.set(value);
-    this.store.loadEmploymentTypes({ isPermanent: value === '' ? undefined : value, page: 1 });
+    this.store.loadEmploymentTypes({
+      status: (value as 'active' | 'inactive') || undefined,
+      page: 1,
+    });
   }
 
   onPageChange(page: number): void {
@@ -307,50 +263,57 @@ export class EmploymentTypeListComponent implements OnInit {
     this.store.loadEmploymentTypes();
   }
 
-  getVisiblePages(): number[] {
-    const current = this.store.pagination().page;
-    const total = this.store.pagination().totalPages;
-    const pages: number[] = [];
-
-    let start = Math.max(1, current - 2);
-    let end = Math.min(total, start + 4);
-
-    if (end - start < 4) {
-      start = Math.max(1, end - 4);
-    }
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    return pages;
-  }
-
   navigateToAdd(): void {
     this.router.navigate(['/masters/employment-types/add']);
   }
 
   navigateToEdit(emp: EmploymentType): void {
-    this.router.navigate(['/masters/employment-types/edit', emp.id]);
+    if (emp.id) {
+      this.router.navigate(['/masters/employment-types/edit', emp.id]);
+    }
   }
 
-  async onToggleStatus(emp: EmploymentType): Promise<void> {
-    const action = emp.status === 'active' ? 'deactivate' : 'activate';
+  async onActivate(emp: EmploymentType): Promise<void> {
+    if (!emp.id) return;
     const confirmed = await this.modalService.confirm(
-      `${action.charAt(0).toUpperCase() + action.slice(1)} Employment Type`,
-      `Are you sure you want to ${action} "${emp.name}"?`,
+      'Activate Employment Type',
+      `Are you sure you want to activate "${emp.name}"?`,
     );
 
     if (confirmed) {
-      this.store.toggleStatus(emp.id).subscribe({
+      this.store.activate(emp.id).subscribe({
         next: (response) => {
           if (response?.success) {
-            this.toasterService.success('Success', `Employment type ${action}d successfully`);
+            this.toasterService.success('Success', 'Employment type activated successfully');
             this.store.loadEmploymentTypes();
           } else {
             this.toasterService.error(
               'Error',
-              response?.message || `Failed to ${action} employment type`,
+              response?.message || 'Failed to activate employment type',
+            );
+          }
+        },
+      });
+    }
+  }
+
+  async onDeactivate(emp: EmploymentType): Promise<void> {
+    if (!emp.id) return;
+    const confirmed = await this.modalService.confirm(
+      'Deactivate Employment Type',
+      `Are you sure you want to deactivate "${emp.name}"?`,
+    );
+
+    if (confirmed) {
+      this.store.deactivate(emp.id).subscribe({
+        next: (response) => {
+          if (response?.success) {
+            this.toasterService.success('Success', 'Employment type deactivated successfully');
+            this.store.loadEmploymentTypes();
+          } else {
+            this.toasterService.error(
+              'Error',
+              response?.message || 'Failed to deactivate employment type',
             );
           }
         },
@@ -359,6 +322,7 @@ export class EmploymentTypeListComponent implements OnInit {
   }
 
   async onDelete(emp: EmploymentType): Promise<void> {
+    if (!emp.id) return;
     const confirmed = await this.modalService.confirm(
       'Delete Employment Type',
       `Are you sure you want to delete "${emp.name}"? This action cannot be undone.`,

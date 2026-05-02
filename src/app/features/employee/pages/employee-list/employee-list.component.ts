@@ -1,18 +1,20 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   inject,
   signal,
   ChangeDetectionStrategy,
   computed,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,8 +27,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { EmployeeStore } from '../../services/employee.store';
+import { EmployeeApiService } from '../../../employees/services/employee-api.service';
 import { EmployeeListItem } from '../../models/employee.model';
 import { Permission } from '../../../../core/models/rbac.models';
+import { ToasterService } from '../../../../core/services/toaster.service';
 
 @Component({
   selector: 'app-employee-list',
@@ -133,7 +137,7 @@ import { Permission } from '../../../../core/models/rbac.models';
               <div class="d-flex align-items-center gap-2">
                 <mat-icon>check_circle</mat-icon>
                 <span>{{ selectedEmployees().length }} employees selected</span>
-                <mat-chip>{{ selectedEmployees().length }} of {{ store.total() }}</mat-chip>
+                <mat-chip>{{ selectedEmployees().length }} of {{ totalElements() }}</mat-chip>
               </div>
               <div class="d-flex gap-1">
                 <button mat-flat-button color="primary" (click)="bulkActivate()">
@@ -156,7 +160,7 @@ import { Permission } from '../../../../core/models/rbac.models';
 
       <div class="card shadow-sm">
         <div class="card-body p-0">
-          @if (store.loading() && !store.hasData()) {
+          @if (isLoading()) {
             <div class="p-4">
               @for (row of skeletonRows; track $index) {
                 <div class="skeleton-row">
@@ -170,7 +174,7 @@ import { Permission } from '../../../../core/models/rbac.models';
                 </div>
               }
             </div>
-          } @else if (!store.hasData() && !store.loading()) {
+          } @else if (dataSource.data.length === 0 && !isLoading()) {
             <div class="empty-state">
               <mat-icon class="empty-icon">people</mat-icon>
               <h3>No Employees Found</h3>
@@ -182,7 +186,7 @@ import { Permission } from '../../../../core/models/rbac.models';
             </div>
           } @else {
             <div class="table-responsive">
-              <table mat-table [dataSource]="store.items()" class="employee-table w-100">
+              <table mat-table [dataSource]="dataSource" class="employee-table w-100">
                 <ng-container matColumnDef="select">
                   <th mat-header-cell *matHeaderCellDef>
                     <mat-checkbox
@@ -297,9 +301,9 @@ import { Permission } from '../../../../core/models/rbac.models';
             </div>
 
             <mat-paginator
-              [length]="store.total()"
-              [pageIndex]="store.page() - 1"
-              [pageSize]="store.limit()"
+              [length]="totalElements()"
+              [pageIndex]="currentPage() - 1"
+              [pageSize]="pageSize()"
               [pageSizeOptions]="[10, 25, 50, 100]"
               showFirstLastButtons
               (page)="onPageChange($event)"
@@ -403,10 +407,11 @@ import { Permission } from '../../../../core/models/rbac.models';
     `,
   ],
 })
-export class EmployeeListComponent implements OnInit {
+export class EmployeeListComponent implements OnInit, OnDestroy {
   readonly store = inject(EmployeeStore);
+  private employeeApi = inject(EmployeeApiService);
   private router = inject(Router);
-  private dialog = inject(MatDialog);
+  private toaster = inject(ToasterService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
@@ -414,8 +419,15 @@ export class EmployeeListComponent implements OnInit {
   statusFilter = signal<string>('');
   employmentStatusFilter = signal<string>('');
   selectedEmployees = signal<EmployeeListItem[]>([]);
+  isLoading = signal<boolean>(false);
 
   skeletonRows = Array(5).fill(0);
+  dataSource = new MatTableDataSource<EmployeeListItem>([]);
+
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalElements = signal<number>(0);
+  totalPages = signal<number>(0);
 
   displayedColumns = [
     'select',
@@ -430,16 +442,48 @@ export class EmployeeListComponent implements OnInit {
 
   readonly Permission = Permission;
 
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
+
   ngOnInit(): void {
-    this.store.loadEmployees();
+    this.loadEmployees();
     this.setupSearchDebounce();
+  }
+
+  private loadEmployees(): void {
+    this.isLoading.set(true);
+    const params = {
+      page: this.currentPage(),
+      limit: this.pageSize(),
+      search: this.searchTerm() || undefined,
+      status: this.statusFilter() || undefined,
+      employmentStatus: this.employmentStatusFilter() || undefined,
+    };
+
+    this.employeeApi.list(params).subscribe({
+      next: (response: any) => {
+        if (response?.success && response.data) {
+          this.dataSource.data = response.data;
+          if (response.pagination) {
+            this.totalElements.set(response.pagination.total);
+            this.totalPages.set(response.pagination.totalPages);
+            this.currentPage.set(response.pagination.page);
+            this.pageSize.set(response.pagination.limit);
+          }
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      },
+    });
   }
 
   private setupSearchDebounce(): void {
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
-        this.store.loadEmployees({ search: this.searchTerm(), page: 1 });
+        this.currentPage.set(1);
+        this.loadEmployees();
       });
   }
 
@@ -461,41 +505,46 @@ export class EmployeeListComponent implements OnInit {
 
   clearSearch(): void {
     this.searchTerm.set('');
-    this.searchSubject.next('');
-    this.store.loadEmployees({ search: undefined, page: 1 });
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   onStatusChange(value: string): void {
     this.statusFilter.set(value);
-    this.store.loadEmployees({ status: value as any, page: 1 });
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   clearStatusFilter(): void {
     this.statusFilter.set('');
-    this.store.loadEmployees({ status: undefined, page: 1 });
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   onEmploymentStatusChange(value: string): void {
     this.employmentStatusFilter.set(value);
-    this.store.loadEmployees({ employmentStatus: value as any, page: 1 });
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   clearEmploymentStatusFilter(): void {
     this.employmentStatusFilter.set('');
-    this.store.loadEmployees({ employmentStatus: undefined, page: 1 });
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   clearAllFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('');
     this.employmentStatusFilter.set('');
-    this.store.clearFilters();
+    this.currentPage.set(1);
+    this.loadEmployees();
   }
 
   onPageChange(event: PageEvent): void {
-    const page = event.pageIndex + 1;
-    const limit = event.pageSize;
-    this.store.loadEmployees({ page, limit });
+    this.currentPage.set(event.pageIndex + 1);
+    this.pageSize.set(event.pageSize);
+    this.loadEmployees();
   }
 
   isSelected(row: EmployeeListItem): boolean {
@@ -504,13 +553,14 @@ export class EmployeeListComponent implements OnInit {
 
   isAllSelected(): boolean {
     return (
-      this.store.items().length > 0 && this.selectedEmployees().length === this.store.items().length
+      this.dataSource.data.length > 0 &&
+      this.selectedEmployees().length === this.dataSource.data.length
     );
   }
 
   isIndeterminate(): boolean {
     const selected = this.selectedEmployees().length;
-    return selected > 0 && selected < this.store.items().length;
+    return selected > 0 && selected < this.dataSource.data.length;
   }
 
   toggleRow(row: EmployeeListItem): void {
@@ -527,7 +577,7 @@ export class EmployeeListComponent implements OnInit {
     if (this.isAllSelected()) {
       this.selectedEmployees.set([]);
     } else {
-      this.selectedEmployees.set([...this.store.items()]);
+      this.selectedEmployees.set([...this.dataSource.data]);
     }
   }
 
@@ -539,12 +589,14 @@ export class EmployeeListComponent implements OnInit {
     const selected = this.selectedEmployees();
     selected.forEach((emp) => this.store.updateStatus(emp.id, 'active').subscribe());
     this.clearSelection();
+    this.loadEmployees();
   }
 
   bulkDeactivate(): void {
     const selected = this.selectedEmployees();
     selected.forEach((emp) => this.store.updateStatus(emp.id, 'inactive').subscribe());
     this.clearSelection();
+    this.loadEmployees();
   }
 
   confirmBulkDelete(): void {
@@ -554,7 +606,11 @@ export class EmployeeListComponent implements OnInit {
         `Are you sure you want to delete ${selected.length} employee(s)? This action cannot be undone.`,
       )
     ) {
-      selected.forEach((emp) => this.store.deleteEmployee(emp.id).subscribe());
+      selected.forEach((emp) => {
+        this.store.deleteEmployee(emp.id).subscribe({
+          next: () => this.loadEmployees(),
+        });
+      });
       this.clearSelection();
     }
   }
@@ -581,7 +637,9 @@ export class EmployeeListComponent implements OnInit {
         `Are you sure you want to delete "${employee.fullName}"? This action cannot be undone.`,
       )
     ) {
-      this.store.deleteEmployee(employee.id).subscribe();
+      this.store.deleteEmployee(employee.id).subscribe({
+        next: () => this.loadEmployees(),
+      });
     }
   }
 

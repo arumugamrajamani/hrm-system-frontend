@@ -14,14 +14,13 @@ interface ApiEmploymentType {
   employment_type_name: string;
   employment_type_code: string;
   description?: string;
-  is_permanent: boolean;
-  probation_months?: number;
-  notice_period_days?: number;
-  max_contract_duration?: number;
-  benefits?: string[];
-  is_active: boolean;
   status: 'active' | 'inactive';
-  employee_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: number;
+  updated_by?: number;
+  created_by_username?: string;
+  updated_by_username?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,14 +34,13 @@ export class EmploymentTypeApiService {
       name: api.employment_type_name,
       code: api.employment_type_code,
       description: api.description,
-      isPermanent: api.is_permanent,
-      probationMonths: api.probation_months,
-      noticePeriodDays: api.notice_period_days,
-      maxContractDuration: api.max_contract_duration,
-      benefits: api.benefits,
-      isActive: api.is_active,
       status: api.status,
-      employeeCount: api.employee_count,
+      created_at: api.created_at,
+      updated_at: api.updated_at,
+      created_by: api.created_by,
+      updated_by: api.updated_by,
+      created_by_username: api.created_by_username,
+      updated_by_username: api.updated_by_username,
     };
   }
 
@@ -65,15 +63,6 @@ export class EmploymentTypeApiService {
       );
   }
 
-  getActiveEmploymentTypes(): Observable<ListResponse<EmploymentType>> {
-    return this.http.get<ListResponse<ApiEmploymentType>>(`${this.baseUrl}/active`).pipe(
-      map((response) => ({
-        ...response,
-        data: response.data.map((item) => this.mapApiToEmploymentType(item)),
-      })),
-    );
-  }
-
   getById(id: number): Observable<DetailResponse<EmploymentType>> {
     return this.http.get<DetailResponse<ApiEmploymentType>>(`${this.baseUrl}/${id}`).pipe(
       map((response) => ({
@@ -88,12 +77,7 @@ export class EmploymentTypeApiService {
       employment_type_name: data.name,
       employment_type_code: data.code,
       description: data.description,
-      is_permanent: data.isPermanent,
-      probation_months: data.probationMonths,
-      notice_period_days: data.noticePeriodDays,
-      max_contract_duration: data.maxContractDuration,
-      benefits: data.benefits,
-      is_active: data.status === 'active',
+      status: data.status,
     };
     return this.http.post<DetailResponse<ApiEmploymentType>>(this.baseUrl, payload).pipe(
       map((response) => ({
@@ -108,12 +92,7 @@ export class EmploymentTypeApiService {
       employment_type_name: data.name,
       employment_type_code: data.code,
       description: data.description,
-      is_permanent: data.isPermanent,
-      probation_months: data.probationMonths,
-      notice_period_days: data.noticePeriodDays,
-      max_contract_duration: data.maxContractDuration,
-      benefits: data.benefits,
-      is_active: data.status === 'active',
+      status: data.status,
     };
     return this.http.put<DetailResponse<ApiEmploymentType>>(`${this.baseUrl}/${id}`, payload).pipe(
       map((response) => ({
@@ -132,11 +111,20 @@ export class EmploymentTypeApiService {
     );
   }
 
-  updateStatus(id: number, status: string): Observable<ApiResponse<EmploymentType>> {
+  activate(id: number): Observable<ApiResponse<EmploymentType>> {
     return this.http
-      .patch<
-        ApiResponse<ApiEmploymentType>
-      >(`${this.baseUrl}/${id}/${status === 'active' ? 'activate' : 'deactivate'}`, {})
+      .patch<ApiResponse<ApiEmploymentType>>(`${this.baseUrl}/${id}/activate`, {})
+      .pipe(
+        map((response) => ({
+          ...response,
+          data: response.data ? this.mapApiToEmploymentType(response.data) : undefined,
+        })),
+      );
+  }
+
+  deactivate(id: number): Observable<ApiResponse<EmploymentType>> {
+    return this.http
+      .patch<ApiResponse<ApiEmploymentType>>(`${this.baseUrl}/${id}/deactivate`, {})
       .pipe(
         map((response) => ({
           ...response,

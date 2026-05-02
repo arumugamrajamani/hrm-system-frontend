@@ -114,95 +114,11 @@ import { ToasterService } from '../../../../../core/services';
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <div class="form-check">
-                  <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="isPermanent"
-                    formControlName="isPermanent"
-                  />
-                  <label class="form-check-label" for="isPermanent"> Permanent Employment </label>
-                </div>
-              </div>
-
-              <div class="col-md-6 mb-3">
                 <label for="status" class="form-label">Status</label>
                 <select class="form-select" id="status" formControlName="status">
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="probationMonths" class="form-label">Probation Period (Months)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="probationMonths"
-                  formControlName="probationMonths"
-                  [class.is-invalid]="isFieldInvalid('probationMonths')"
-                  placeholder="e.g., 6"
-                  min="0"
-                  max="36"
-                />
-                @if (isFieldInvalid('probationMonths') && hasError('probationMonths', 'min')) {
-                  <div class="invalid-feedback d-block">Probation months cannot be negative</div>
-                }
-                @if (isFieldInvalid('probationMonths') && hasError('probationMonths', 'max')) {
-                  <div class="invalid-feedback d-block">Probation months cannot exceed 36</div>
-                }
-              </div>
-
-              <div class="col-md-4 mb-3">
-                <label for="noticePeriodDays" class="form-label">Notice Period (Days)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="noticePeriodDays"
-                  formControlName="noticePeriodDays"
-                  [class.is-invalid]="isFieldInvalid('noticePeriodDays')"
-                  placeholder="e.g., 30"
-                  min="0"
-                  max="180"
-                />
-                @if (isFieldInvalid('noticePeriodDays') && hasError('noticePeriodDays', 'min')) {
-                  <div class="invalid-feedback d-block">Notice period cannot be negative</div>
-                }
-                @if (isFieldInvalid('noticePeriodDays') && hasError('noticePeriodDays', 'max')) {
-                  <div class="invalid-feedback d-block">Notice period cannot exceed 180 days</div>
-                }
-              </div>
-
-              <div class="col-md-4 mb-3">
-                <label for="maxContractDuration" class="form-label"
-                  >Max Contract Duration (Months)</label
-                >
-                <input
-                  type="number"
-                  class="form-control"
-                  id="maxContractDuration"
-                  formControlName="maxContractDuration"
-                  [class.is-invalid]="isFieldInvalid('maxContractDuration')"
-                  placeholder="e.g., 24"
-                  min="0"
-                  max="120"
-                />
-                @if (
-                  isFieldInvalid('maxContractDuration') && hasError('maxContractDuration', 'min')
-                ) {
-                  <div class="invalid-feedback d-block">
-                    Max contract duration cannot be negative
-                  </div>
-                }
-                @if (
-                  isFieldInvalid('maxContractDuration') && hasError('maxContractDuration', 'max')
-                ) {
-                  <div class="invalid-feedback d-block">
-                    Max contract duration cannot exceed 120 months
-                  </div>
-                }
               </div>
             </div>
 
@@ -296,10 +212,6 @@ export class EmploymentTypeFormComponent implements OnInit, OnDestroy {
         ],
       ],
       description: ['', Validators.maxLength(1000)],
-      isPermanent: [true],
-      probationMonths: [null, [Validators.min(0), Validators.max(36)]],
-      noticePeriodDays: [null, [Validators.min(0), Validators.max(180)]],
-      maxContractDuration: [null, [Validators.min(0), Validators.max(120)]],
       status: ['active'],
     });
 
@@ -317,10 +229,6 @@ export class EmploymentTypeFormComponent implements OnInit, OnDestroy {
           name: empType.name,
           code: empType.code,
           description: empType.description || '',
-          isPermanent: empType.isPermanent,
-          probationMonths: empType.probationMonths || null,
-          noticePeriodDays: empType.noticePeriodDays || null,
-          maxContractDuration: empType.maxContractDuration || null,
           status: empType.status,
         });
       }
@@ -437,13 +345,9 @@ export class EmploymentTypeFormComponent implements OnInit, OnDestroy {
 
   private mapApiFieldToFormField(apiField: string): string | null {
     const fieldMapping: Record<string, string> = {
-      name: 'name',
-      code: 'code',
+      employment_type_name: 'name',
+      employment_type_code: 'code',
       description: 'description',
-      isPermanent: 'isPermanent',
-      probationMonths: 'probationMonths',
-      noticePeriodDays: 'noticePeriodDays',
-      maxContractDuration: 'maxContractDuration',
       status: 'status',
     };
     return fieldMapping[apiField] || null;
