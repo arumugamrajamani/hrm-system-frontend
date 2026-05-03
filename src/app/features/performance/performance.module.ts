@@ -26,7 +26,11 @@ import { Permission } from '../../core/models/rbac.models';
 
 import { GoalsListComponent } from './pages/goals-list/goals-list.component';
 import { AppraisalCycleComponent } from './pages/appraisal-cycle/appraisal-cycle.component';
-import { TrainingRecordsComponent } from './pages/training-records/training-records.component';
+import { SelfRatingComponent } from './pages/self-rating/self-rating.component';
+import { ManagerRatingComponent } from './pages/manager-rating/manager-rating.component';
+import { RatingsComponent } from './pages/ratings/ratings.component';
+import { CycleFormComponent } from './pages/cycle-form/cycle-form.component';
+import { GoalFormComponent } from './pages/goal-form/goal-form.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'goals', pathMatch: 'full' },
@@ -34,24 +38,80 @@ const routes: Routes = [
     path: 'goals',
     component: GoalsListComponent,
     canActivate: [PermissionGuard],
-    data: { permissions: [Permission.READ] },
+    data: { rbac: { permissions: [Permission.READ] } },
   },
   {
-    path: 'appraisals',
+    path: 'cycles',
     component: AppraisalCycleComponent,
     canActivate: [PermissionGuard],
-    data: { permissions: [Permission.READ] },
+    data: { rbac: { permissions: [Permission.READ] } },
   },
   {
-    path: 'training',
-    component: TrainingRecordsComponent,
+    path: 'self-rating',
+    component: SelfRatingComponent,
     canActivate: [PermissionGuard],
-    data: { permissions: [Permission.READ] },
+    data: { rbac: { permissions: [Permission.READ] } },
+  },
+  {
+    path: 'self-rating/:cycleId/:employeeId',
+    component: SelfRatingComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.READ] } },
+  },
+  {
+    path: 'manager-rating',
+    component: ManagerRatingComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.READ] } },
+  },
+  {
+    path: 'manager-rating/:cycleId/:employeeId',
+    component: ManagerRatingComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.READ] } },
+  },
+  {
+    path: 'ratings',
+    component: RatingsComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.READ] } },
+  },
+  {
+    path: 'cycles/create',
+    component: CycleFormComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.CREATE] } },
+  },
+  {
+    path: 'cycles/edit/:id',
+    component: CycleFormComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.EDIT] } },
+  },
+  {
+    path: 'goals/create',
+    component: GoalFormComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.CREATE] } },
+  },
+  {
+    path: 'goals/edit/:id',
+    component: GoalFormComponent,
+    canActivate: [PermissionGuard],
+    data: { rbac: { permissions: [Permission.EDIT] } },
   },
 ];
 
 @NgModule({
-  declarations: [GoalsListComponent, AppraisalCycleComponent, TrainingRecordsComponent],
+  declarations: [
+    GoalsListComponent,
+    AppraisalCycleComponent,
+    SelfRatingComponent,
+    ManagerRatingComponent,
+    RatingsComponent,
+    CycleFormComponent,
+    GoalFormComponent,
+  ],
   imports: [
     CommonModule,
     RouterModule.forChild(routes),

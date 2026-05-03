@@ -1,18 +1,31 @@
-export enum GoalStatus {
+export enum CycleType {
+  QUARTERLY = 'quarterly',
+  ANNUAL = 'annual',
+}
+
+export enum CycleStatus {
   DRAFT = 'draft',
+  ACTIVE = 'active',
+  SELF_RATING_OPEN = 'self_rating_open',
+  SELF_RATING_CLOSED = 'self_rating_closed',
+  MANAGER_RATING_OPEN = 'manager_rating_open',
+  MANAGER_RATING_CLOSED = 'manager_rating_closed',
+  HR_REVIEW = 'hr_review',
+  COMPLETED = 'completed',
+}
+
+export enum GoalStatus {
+  PENDING = 'pending',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
 }
 
-export enum AppraisalStatus {
-  DRAFT = 'draft',
-  SELF_REVIEW = 'self_review',
-  MANAGER_REVIEW = 'manager_review',
-  SKIP_LEVEL_REVIEW = 'skip_level_review',
-  CALIBRATION = 'calibration',
-  COMPLETED = 'completed',
-  LOCKED = 'locked',
+export enum GoalPriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
 }
 
 export enum RatingScale {
@@ -23,132 +36,176 @@ export enum RatingScale {
   OUTSTANDING = 5,
 }
 
+export interface PerformanceCycle {
+  id: number;
+  cycle_name: string;
+  cycle_code: string;
+  cycle_type: CycleType;
+  fiscal_year: number;
+  quarter?: number;
+  start_date: string;
+  end_date: string;
+  self_rating_start: string;
+  self_rating_end: string;
+  manager_rating_start: string;
+  manager_rating_end: string;
+  status: CycleStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Goal {
   id: number;
-  employeeId: number;
-  employeeName?: string;
-  title: string;
-  description?: string;
-  category: 'business' | 'personal' | 'team' | 'project';
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  cycle_id: number;
+  employee_id: number;
+  employee_name?: string;
+  goal_title: string;
+  goal_description?: string;
+  kpi_description?: string;
+  target_value?: string;
+  weightage?: number;
+  priority: GoalPriority;
   status: GoalStatus;
-  startDate: string;
-  targetDate: string;
-  completedDate?: string;
-  weightage: number;
-  managerId?: number;
-  managerName?: string;
-  progress: number;
-  selfRating?: RatingScale;
-  managerRating?: RatingScale;
-  finalRating?: RatingScale;
-  remarks?: string;
+  self_rating?: SelfRating;
+  manager_rating?: ManagerRating;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface KRA {
-  id: number;
-  employeeId: number;
-  title: string;
-  description?: string;
-  weightage: number;
-  goals?: Goal[];
-  selfRating?: RatingScale;
-  managerRating?: RatingScale;
+export interface SelfRating {
+  id?: number;
+  goal_id: number;
+  self_rating: number;
+  achievement_summary?: string;
+  what_achieved?: string;
+  what_missed?: string;
+  challenges_faced?: string;
+  submitted_at?: string;
 }
 
-export interface KPI {
-  id: number;
-  name: string;
-  description?: string;
-  category: string;
-  measurementType: 'numeric' | 'percentage' | 'boolean' | 'rating';
-  targetValue?: number;
-  actualValue?: number;
-  unit?: string;
-  isActive: boolean;
+export interface ManagerRating {
+  id?: number;
+  goal_id: number;
+  manager_rating: number;
+  manager_comments?: string;
+  what_employee_did_well?: string;
+  areas_of_improvement?: string;
+  manager_feedback?: string;
+  submitted_at?: string;
 }
 
-export interface AppraisalCycle {
-  id: number;
-  name: string;
-  period: {
-    from: string;
-    to: string;
+export interface OverallRating {
+  id?: number;
+  cycle_id: number;
+  employee_id: number;
+  employee_name?: string;
+  manager_summary?: string;
+  employee_comments?: string;
+  hr_comments?: string;
+  rating_category?: string;
+  average_self_rating?: number;
+  average_manager_rating?: number;
+  is_approved?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AnnualSummary {
+  id?: number;
+  fiscal_year: number;
+  employee_id: number;
+  employee_name?: string;
+  overall_rating?: number;
+  summary?: string;
+  achievements?: string;
+  areas_for_improvement?: string;
+  goals_completed?: number;
+  total_goals?: number;
+  is_approved?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateCycleDto {
+  cycle_name: string;
+  cycle_code: string;
+  cycle_type: CycleType;
+  fiscal_year: number;
+  quarter?: number;
+  start_date: string;
+  end_date: string;
+  self_rating_start: string;
+  self_rating_end: string;
+  manager_rating_start: string;
+  manager_rating_end: string;
+}
+
+export interface UpdateCycleDto {
+  cycle_name?: string;
+  status?: CycleStatus;
+}
+
+export interface UpdateCycleStatusDto {
+  status: CycleStatus;
+}
+
+export interface CreateGoalDto {
+  cycle_id: number;
+  employee_id: number;
+  goal_title: string;
+  goal_description?: string;
+  kpi_description?: string;
+  target_value?: string;
+  weightage?: number;
+  priority: GoalPriority;
+}
+
+export interface UpdateGoalDto {
+  goal_title?: string;
+  goal_description?: string;
+  status?: GoalStatus;
+}
+
+export interface CreateSelfRatingDto {
+  self_rating: number;
+  achievement_summary?: string;
+  what_achieved?: string;
+  what_missed?: string;
+  challenges_faced?: string;
+}
+
+export interface CreateManagerRatingDto {
+  manager_rating: number;
+  manager_comments?: string;
+  what_employee_did_well?: string;
+  areas_of_improvement?: string;
+  manager_feedback?: string;
+}
+
+export interface UpdateOverallRatingDto {
+  manager_summary?: string;
+  employee_comments?: string;
+  hr_comments?: string;
+  rating_category?: string;
+}
+
+export function getCycleStatusLabel(status: CycleStatus): string {
+  const labels: Record<CycleStatus, string> = {
+    [CycleStatus.DRAFT]: 'Draft',
+    [CycleStatus.ACTIVE]: 'Active',
+    [CycleStatus.SELF_RATING_OPEN]: 'Self Rating Open',
+    [CycleStatus.SELF_RATING_CLOSED]: 'Self Rating Closed',
+    [CycleStatus.MANAGER_RATING_OPEN]: 'Manager Rating Open',
+    [CycleStatus.MANAGER_RATING_CLOSED]: 'Manager Rating Closed',
+    [CycleStatus.HR_REVIEW]: 'HR Review',
+    [CycleStatus.COMPLETED]: 'Completed',
   };
-  status: 'draft' | 'active' | 'completed' | 'locked';
-  selfReviewStart: string;
-  selfReviewEnd: string;
-  managerReviewStart: string;
-  managerReviewEnd: string;
-  calibrationStart?: string;
-  calibrationEnd?: string;
-  totalEmployees: number;
-  completedReviews: number;
-}
-
-export interface Appraisal {
-  id: number;
-  cycleId: number;
-  employeeId: number;
-  employeeName?: string;
-  departmentName?: string;
-  designationName?: string;
-  status: AppraisalStatus;
-  selfReview?: ReviewData;
-  managerReview?: ReviewData;
-  skipLevelReview?: ReviewData;
-  finalRating?: RatingScale;
-  finalRemarks?: string;
-  completedAt?: string;
-}
-
-export interface ReviewData {
-  overallRating?: RatingScale;
-  strengths?: string[];
-  areasForImprovement?: string[];
-  comments?: string;
-  goalsReview: { goalId: number; rating: RatingScale; comments?: string }[];
-  kraReview: { kraId: number; rating: RatingScale; comments?: string }[];
-  reviewedBy?: number;
-  reviewedByName?: string;
-  reviewedAt?: string;
-}
-
-export interface TrainingRecord {
-  id: number;
-  employeeId: number;
-  employeeName?: string;
-  title: string;
-  type: 'internal' | 'external' | 'online' | 'certification';
-  provider?: string;
-  startDate: string;
-  endDate?: string;
-  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
-  cost?: number;
-  certificateUrl?: string;
-}
-
-export interface SuccessionPlan {
-  id: number;
-  positionId: number;
-  positionName: string;
-  incumbentId?: number;
-  incumbentName?: string;
-  successors: Successor[];
-  readiness: 'immediate' | '1_year' | '2_years' | 'developing';
-}
-
-export interface Successor {
-  id: number;
-  employeeId: number;
-  employeeName: string;
-  readiness: 'immediate' | '1_year' | '2_years' | 'developing';
-  developmentPlan?: string;
+  return labels[status] || status;
 }
 
 export function getGoalStatusLabel(status: GoalStatus): string {
   const labels: Record<GoalStatus, string> = {
-    [GoalStatus.DRAFT]: 'Draft',
+    [GoalStatus.PENDING]: 'Pending',
     [GoalStatus.IN_PROGRESS]: 'In Progress',
     [GoalStatus.COMPLETED]: 'Completed',
     [GoalStatus.CANCELLED]: 'Cancelled',
@@ -156,47 +213,36 @@ export function getGoalStatusLabel(status: GoalStatus): string {
   return labels[status] || status;
 }
 
-export function getAppraisalStatusLabel(status: AppraisalStatus): string {
-  const labels: Record<AppraisalStatus, string> = {
-    [AppraisalStatus.DRAFT]: 'Draft',
-    [AppraisalStatus.SELF_REVIEW]: 'Self Review',
-    [AppraisalStatus.MANAGER_REVIEW]: 'Manager Review',
-    [AppraisalStatus.SKIP_LEVEL_REVIEW]: 'Skip Level Review',
-    [AppraisalStatus.CALIBRATION]: 'Calibration',
-    [AppraisalStatus.COMPLETED]: 'Completed',
-    [AppraisalStatus.LOCKED]: 'Locked',
+export function getPriorityLabel(priority: GoalPriority): string {
+  const labels: Record<GoalPriority, string> = {
+    [GoalPriority.LOW]: 'Low',
+    [GoalPriority.MEDIUM]: 'Medium',
+    [GoalPriority.HIGH]: 'High',
+    [GoalPriority.CRITICAL]: 'Critical',
   };
-  return labels[status] || status;
+  return labels[priority] || priority;
 }
 
-export function getRatingLabel(rating?: RatingScale): string {
+export function getRatingLabel(rating?: number): string {
   if (!rating) return 'N/A';
-  const labels: Record<RatingScale, string> = {
-    [RatingScale.POOR]: 'Poor',
-    [RatingScale.BELOW_EXPECTATIONS]: 'Below Expectations',
-    [RatingScale.MEETS_EXPECTATIONS]: 'Meets Expectations',
-    [RatingScale.EXCEEDS_EXPECTATIONS]: 'Exceeds Expectations',
-    [RatingScale.OUTSTANDING]: 'Outstanding',
+  const labels: Record<number, string> = {
+    1: 'Poor',
+    2: 'Below Expectations',
+    3: 'Meets Expectations',
+    4: 'Exceeds Expectations',
+    5: 'Outstanding',
   };
   return labels[rating] || 'N/A';
 }
 
-export function getGoalCategoryLabel(category: Goal['category']): string {
-  const labels: Record<Goal['category'], string> = {
-    business: 'Business',
-    personal: 'Personal',
-    team: 'Team',
-    project: 'Project',
+export function getRatingBadgeClass(rating?: number): string {
+  if (!rating) return 'bg-secondary';
+  const classes: Record<number, string> = {
+    1: 'bg-danger',
+    2: 'bg-warning',
+    3: 'bg-info',
+    4: 'bg-primary',
+    5: 'bg-success',
   };
-  return labels[category] || category;
-}
-
-export function getPriorityLabel(priority: Goal['priority']): string {
-  const labels: Record<Goal['priority'], string> = {
-    low: 'Low',
-    medium: 'Medium',
-    high: 'High',
-    critical: 'Critical',
-  };
-  return labels[priority] || priority;
+  return classes[rating] || 'bg-secondary';
 }

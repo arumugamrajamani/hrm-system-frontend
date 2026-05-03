@@ -3,16 +3,20 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  PerformanceCycle,
   Goal,
-  GoalStatus,
-  KRA,
-  KPI,
-  AppraisalCycle,
-  Appraisal,
-  AppraisalStatus,
-  TrainingRecord,
-  SuccessionPlan,
-  ReviewData,
+  SelfRating,
+  ManagerRating,
+  OverallRating,
+  AnnualSummary,
+  CreateCycleDto,
+  UpdateCycleDto,
+  UpdateCycleStatusDto,
+  CreateGoalDto,
+  UpdateGoalDto,
+  CreateSelfRatingDto,
+  CreateManagerRatingDto,
+  UpdateOverallRatingDto,
 } from '../models/performance.model';
 import {
   ListResponse,
@@ -25,7 +29,42 @@ export class PerformanceApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/performance`;
 
-  // Goals CRUD
+  // Performance Cycles
+  getCycles(params: Record<string, unknown> = {}): Observable<ListResponse<PerformanceCycle>> {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
+    return this.http.get<ListResponse<PerformanceCycle>>(`${this.baseUrl}/cycles`, {
+      params: httpParams,
+    });
+  }
+
+  getCycleById(id: number): Observable<DetailResponse<PerformanceCycle>> {
+    return this.http.get<DetailResponse<PerformanceCycle>>(`${this.baseUrl}/cycles/${id}`);
+  }
+
+  createCycle(data: CreateCycleDto): Observable<DetailResponse<PerformanceCycle>> {
+    return this.http.post<DetailResponse<PerformanceCycle>>(`${this.baseUrl}/cycles`, data);
+  }
+
+  updateCycle(id: number, data: UpdateCycleDto): Observable<DetailResponse<PerformanceCycle>> {
+    return this.http.put<DetailResponse<PerformanceCycle>>(`${this.baseUrl}/cycles/${id}`, data);
+  }
+
+  updateCycleStatus(
+    id: number,
+    data: UpdateCycleStatusDto,
+  ): Observable<ApiResponse<PerformanceCycle>> {
+    return this.http.patch<ApiResponse<PerformanceCycle>>(
+      `${this.baseUrl}/cycles/${id}/status`,
+      data,
+    );
+  }
+
+  // Goals
   getGoals(params: Record<string, unknown> = {}): Observable<ListResponse<Goal>> {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -40,11 +79,11 @@ export class PerformanceApiService {
     return this.http.get<DetailResponse<Goal>>(`${this.baseUrl}/goals/${id}`);
   }
 
-  createGoal(data: Partial<Goal>): Observable<DetailResponse<Goal>> {
+  createGoal(data: CreateGoalDto): Observable<DetailResponse<Goal>> {
     return this.http.post<DetailResponse<Goal>>(`${this.baseUrl}/goals`, data);
   }
 
-  updateGoal(id: number, data: Partial<Goal>): Observable<DetailResponse<Goal>> {
+  updateGoal(id: number, data: UpdateGoalDto): Observable<DetailResponse<Goal>> {
     return this.http.put<DetailResponse<Goal>>(`${this.baseUrl}/goals/${id}`, data);
   }
 
@@ -52,204 +91,168 @@ export class PerformanceApiService {
     return this.http.delete<ApiResponse<Goal>>(`${this.baseUrl}/goals/${id}`);
   }
 
-  updateGoalProgress(id: number, progress: number): Observable<DetailResponse<Goal>> {
-    return this.http.patch<DetailResponse<Goal>>(`${this.baseUrl}/goals/${id}/progress`, {
-      progress,
-    });
-  }
-
-  // Appraisal Cycles
-  getAppraisalCycles(
-    params: Record<string, unknown> = {},
-  ): Observable<ListResponse<AppraisalCycle>> {
-    let httpParams = new HttpParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, String(value));
-      }
-    });
-    return this.http.get<ListResponse<AppraisalCycle>>(`${this.baseUrl}/cycles`, {
-      params: httpParams,
-    });
-  }
-
-  getAppraisalCycleById(id: number): Observable<DetailResponse<AppraisalCycle>> {
-    return this.http.get<DetailResponse<AppraisalCycle>>(`${this.baseUrl}/cycles/${id}`);
-  }
-
-  createAppraisalCycle(data: Partial<AppraisalCycle>): Observable<DetailResponse<AppraisalCycle>> {
-    return this.http.post<DetailResponse<AppraisalCycle>>(`${this.baseUrl}/cycles`, data);
-  }
-
-  updateAppraisalCycle(
-    id: number,
-    data: Partial<AppraisalCycle>,
-  ): Observable<DetailResponse<AppraisalCycle>> {
-    return this.http.put<DetailResponse<AppraisalCycle>>(`${this.baseUrl}/cycles/${id}`, data);
-  }
-
-  deleteAppraisalCycle(id: number): Observable<ApiResponse<AppraisalCycle>> {
-    return this.http.delete<ApiResponse<AppraisalCycle>>(`${this.baseUrl}/cycles/${id}`);
-  }
-
-  activateCycle(id: number): Observable<ApiResponse<AppraisalCycle>> {
-    return this.http.post<ApiResponse<AppraisalCycle>>(`${this.baseUrl}/cycles/${id}/activate`, {});
-  }
-
-  lockCycle(id: number): Observable<ApiResponse<AppraisalCycle>> {
-    return this.http.post<ApiResponse<AppraisalCycle>>(`${this.baseUrl}/cycles/${id}/lock`, {});
-  }
-
-  // Appraisals
-  getAppraisals(params: Record<string, unknown> = {}): Observable<ListResponse<Appraisal>> {
-    let httpParams = new HttpParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, String(value));
-      }
-    });
-    return this.http.get<ListResponse<Appraisal>>(`${this.baseUrl}/appraisals`, {
-      params: httpParams,
-    });
-  }
-
-  getAppraisalById(id: number): Observable<DetailResponse<Appraisal>> {
-    return this.http.get<DetailResponse<Appraisal>>(`${this.baseUrl}/appraisals/${id}`);
-  }
-
-  submitSelfReview(
-    appraisalId: number,
-    reviewData: ReviewData,
-  ): Observable<ApiResponse<Appraisal>> {
-    return this.http.post<ApiResponse<Appraisal>>(
-      `${this.baseUrl}/appraisals/${appraisalId}/self-review`,
-      reviewData,
+  getGoalsByCycleAndEmployee(cycleId: number, employeeId: number): Observable<ListResponse<Goal>> {
+    return this.http.get<ListResponse<Goal>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/goals`,
     );
   }
 
-  submitManagerReview(
-    appraisalId: number,
-    reviewData: ReviewData,
-  ): Observable<ApiResponse<Appraisal>> {
-    return this.http.post<ApiResponse<Appraisal>>(
-      `${this.baseUrl}/appraisals/${appraisalId}/manager-review`,
-      reviewData,
+  getGoalsWithRatingsByCycleAndEmployee(
+    cycleId: number,
+    employeeId: number,
+  ): Observable<ListResponse<Goal>> {
+    return this.http.get<ListResponse<Goal>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/goals-with-ratings`,
     );
   }
 
-  submitSkipLevelReview(
-    appraisalId: number,
-    reviewData: ReviewData,
-  ): Observable<ApiResponse<Appraisal>> {
-    return this.http.post<ApiResponse<Appraisal>>(
-      `${this.baseUrl}/appraisals/${appraisalId}/skip-level-review`,
-      reviewData,
+  // Self Ratings
+  submitSelfRating(
+    goalId: number,
+    data: CreateSelfRatingDto,
+  ): Observable<DetailResponse<SelfRating>> {
+    return this.http.post<DetailResponse<SelfRating>>(
+      `${this.baseUrl}/goals/${goalId}/self-rating`,
+      data,
     );
   }
 
-  // KRAs
-  getKRAs(params: Record<string, unknown> = {}): Observable<ListResponse<KRA>> {
+  submitAllSelfRatings(cycleId: number): Observable<ApiResponse<SelfRating>> {
+    return this.http.post<ApiResponse<SelfRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/submit-all-self-ratings`,
+      {},
+    );
+  }
+
+  getSelfRatingsByCycleAndEmployee(
+    cycleId: number,
+    employeeId: number,
+  ): Observable<ListResponse<SelfRating>> {
+    return this.http.get<ListResponse<SelfRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/self-ratings`,
+    );
+  }
+
+  // Manager Ratings
+  submitManagerRating(
+    goalId: number,
+    data: CreateManagerRatingDto,
+  ): Observable<DetailResponse<ManagerRating>> {
+    return this.http.post<DetailResponse<ManagerRating>>(
+      `${this.baseUrl}/goals/${goalId}/manager-rating`,
+      data,
+    );
+  }
+
+  submitAllManagerRatings(cycleId: number): Observable<ApiResponse<ManagerRating>> {
+    return this.http.post<ApiResponse<ManagerRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/submit-all-manager-ratings`,
+      {},
+    );
+  }
+
+  getManagerRatingsByCycleAndEmployee(
+    cycleId: number,
+    employeeId: number,
+  ): Observable<ListResponse<ManagerRating>> {
+    return this.http.get<ListResponse<ManagerRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/manager-ratings`,
+    );
+  }
+
+  // Overall Ratings
+  getOverallRatings(params: Record<string, unknown> = {}): Observable<ListResponse<OverallRating>> {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         httpParams = httpParams.set(key, String(value));
       }
     });
-    return this.http.get<ListResponse<KRA>>(`${this.baseUrl}/kras`, { params: httpParams });
-  }
-
-  createKRA(data: Partial<KRA>): Observable<DetailResponse<KRA>> {
-    return this.http.post<DetailResponse<KRA>>(`${this.baseUrl}/kras`, data);
-  }
-
-  updateKRA(id: number, data: Partial<KRA>): Observable<DetailResponse<KRA>> {
-    return this.http.put<DetailResponse<KRA>>(`${this.baseUrl}/kras/${id}`, data);
-  }
-
-  deleteKRA(id: number): Observable<ApiResponse<KRA>> {
-    return this.http.delete<ApiResponse<KRA>>(`${this.baseUrl}/kras/${id}`);
-  }
-
-  // KPIs
-  getKPIs(params: Record<string, unknown> = {}): Observable<ListResponse<KPI>> {
-    let httpParams = new HttpParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, String(value));
-      }
-    });
-    return this.http.get<ListResponse<KPI>>(`${this.baseUrl}/kpis`, { params: httpParams });
-  }
-
-  createKPI(data: Partial<KPI>): Observable<DetailResponse<KPI>> {
-    return this.http.post<DetailResponse<KPI>>(`${this.baseUrl}/kpis`, data);
-  }
-
-  updateKPI(id: number, data: Partial<KPI>): Observable<DetailResponse<KPI>> {
-    return this.http.put<DetailResponse<KPI>>(`${this.baseUrl}/kpis/${id}`, data);
-  }
-
-  deleteKPI(id: number): Observable<ApiResponse<KPI>> {
-    return this.http.delete<ApiResponse<KPI>>(`${this.baseUrl}/kpis/${id}`);
-  }
-
-  // Training Records
-  getTrainingRecords(
-    params: Record<string, unknown> = {},
-  ): Observable<ListResponse<TrainingRecord>> {
-    let httpParams = new HttpParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, String(value));
-      }
-    });
-    return this.http.get<ListResponse<TrainingRecord>>(`${this.baseUrl}/training`, {
+    return this.http.get<ListResponse<OverallRating>>(`${this.baseUrl}/overall-ratings`, {
       params: httpParams,
     });
   }
 
-  createTrainingRecord(data: Partial<TrainingRecord>): Observable<DetailResponse<TrainingRecord>> {
-    return this.http.post<DetailResponse<TrainingRecord>>(`${this.baseUrl}/training`, data);
+  getOverallRatingByCycleAndEmployee(
+    cycleId: number,
+    employeeId: number,
+  ): Observable<DetailResponse<OverallRating>> {
+    return this.http.get<DetailResponse<OverallRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/overall-rating`,
+    );
   }
 
-  updateTrainingRecord(
-    id: number,
-    data: Partial<TrainingRecord>,
-  ): Observable<DetailResponse<TrainingRecord>> {
-    return this.http.put<DetailResponse<TrainingRecord>>(`${this.baseUrl}/training/${id}`, data);
+  updateOverallRating(
+    cycleId: number,
+    employeeId: number,
+    data: UpdateOverallRatingDto,
+  ): Observable<DetailResponse<OverallRating>> {
+    return this.http.put<DetailResponse<OverallRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/overall-rating`,
+      data,
+    );
   }
 
-  deleteTrainingRecord(id: number): Observable<ApiResponse<TrainingRecord>> {
-    return this.http.delete<ApiResponse<TrainingRecord>>(`${this.baseUrl}/training/${id}`);
+  approveOverallRating(
+    cycleId: number,
+    employeeId: number,
+  ): Observable<ApiResponse<OverallRating>> {
+    return this.http.patch<ApiResponse<OverallRating>>(
+      `${this.baseUrl}/cycles/${cycleId}/employees/${employeeId}/overall-rating/approve`,
+      {},
+    );
   }
 
-  // Succession Plans
-  getSuccessionPlans(
+  // Annual Summaries
+  getAnnualSummaries(
     params: Record<string, unknown> = {},
-  ): Observable<ListResponse<SuccessionPlan>> {
+  ): Observable<ListResponse<AnnualSummary>> {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         httpParams = httpParams.set(key, String(value));
       }
     });
-    return this.http.get<ListResponse<SuccessionPlan>>(`${this.baseUrl}/succession`, {
+    return this.http.get<ListResponse<AnnualSummary>>(`${this.baseUrl}/annual-summaries`, {
       params: httpParams,
     });
   }
 
-  createSuccessionPlan(data: Partial<SuccessionPlan>): Observable<DetailResponse<SuccessionPlan>> {
-    return this.http.post<DetailResponse<SuccessionPlan>>(`${this.baseUrl}/succession`, data);
+  generateAnnualSummary(
+    fiscalYear: number,
+    employeeId: number,
+  ): Observable<DetailResponse<AnnualSummary>> {
+    return this.http.post<DetailResponse<AnnualSummary>>(
+      `${this.baseUrl}/fiscal-years/${fiscalYear}/employees/${employeeId}/annual-summary`,
+      {},
+    );
   }
 
-  updateSuccessionPlan(
-    id: number,
-    data: Partial<SuccessionPlan>,
-  ): Observable<DetailResponse<SuccessionPlan>> {
-    return this.http.put<DetailResponse<SuccessionPlan>>(`${this.baseUrl}/succession/${id}`, data);
+  getAnnualSummaryByYearAndEmployee(
+    fiscalYear: number,
+    employeeId: number,
+  ): Observable<DetailResponse<AnnualSummary>> {
+    return this.http.get<DetailResponse<AnnualSummary>>(
+      `${this.baseUrl}/fiscal-years/${fiscalYear}/employees/${employeeId}/annual-summary`,
+    );
   }
 
-  deleteSuccessionPlan(id: number): Observable<ApiResponse<SuccessionPlan>> {
-    return this.http.delete<ApiResponse<SuccessionPlan>>(`${this.baseUrl}/succession/${id}`);
+  approveAnnualSummary(
+    fiscalYear: number,
+    employeeId: number,
+  ): Observable<ApiResponse<AnnualSummary>> {
+    return this.http.patch<ApiResponse<AnnualSummary>>(
+      `${this.baseUrl}/fiscal-years/${fiscalYear}/employees/${employeeId}/annual-summary/approve`,
+      {},
+    );
+  }
+
+  // Notifications & Admin
+  processNotifications(): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/process-notifications`, {});
+  }
+
+  checkCycleStatuses(): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/check-cycle-statuses`, {});
   }
 }

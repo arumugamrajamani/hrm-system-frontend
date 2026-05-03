@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,11 +6,11 @@ import { PerformanceStore } from '../../services/performance.store';
 import {
   Goal,
   GoalStatus,
-  RatingScale,
+  GoalPriority,
   getGoalStatusLabel,
-  getGoalCategoryLabel,
   getPriorityLabel,
   getRatingLabel,
+  getRatingBadgeClass,
 } from '../../models/performance.model';
 import { Permission } from '../../../../core/models/rbac.models';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
@@ -25,18 +25,18 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
         <div class="col">
           <h2 class="page-title">
             <i class="fas fa-bullseye me-2"></i>
-            Goals & KPIs
+            Performance Goals
           </h2>
         </div>
         <div class="col-auto">
           <div class="btn-group me-2">
-            <button class="btn btn-outline-secondary" (click)="navigateToKPIs()">
-              <i class="fas fa-chart-line me-1"></i>
-              KPIs
+            <button class="btn btn-outline-secondary" (click)="navigateToCycles()">
+              <i class="fas fa-calendar-alt me-1"></i>
+              Cycles
             </button>
-            <button class="btn btn-outline-secondary" (click)="navigateToAppraisals()">
-              <i class="fas fa-clipboard-check me-1"></i>
-              Appraisals
+            <button class="btn btn-outline-secondary" (click)="navigateToRatings()">
+              <i class="fas fa-star me-1"></i>
+              Ratings
             </button>
           </div>
           @if (store.canCreate()) {
@@ -81,8 +81,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm">
             <div class="card-body">
-              <h6 class="text-muted mb-2">Avg. Progress</h6>
-              <h4 class="mb-0 text-info">{{ getAverageProgress() }}%</h4>
+              <h6 class="text-muted mb-2">Self Rated</h6>
+              <h4 class="mb-0 text-info">{{ getSelfRatedCount() }}</h4>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
         <div class="col-md-2">
           <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
             <option value="">All Status</option>
-            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
@@ -125,16 +125,11 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
           </select>
         </div>
         <div class="col-md-2">
-          <select
-            class="form-select"
-            [(ngModel)]="categoryFilter"
-            (ngModelChange)="onFilterChange()"
-          >
-            <option value="">All Categories</option>
-            <option value="business">Business</option>
-            <option value="personal">Personal</option>
-            <option value="team">Team</option>
-            <option value="project">Project</option>
+          <select class="form-select" [(ngModel)]="cycleFilter" (ngModelChange)="onFilterChange()">
+            <option value="">All Cycles</option>
+            @for (cycle of store.cycles(); track cycle.id) {
+              <option [value]="cycle.id">{{ cycle.cycle_name }}</option>
+            }
           </select>
         </div>
       </div>
@@ -146,7 +141,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
             @for (row of skeletonRows; track $index) {
               <app-loading-skeleton
                 type="table-row"
-                [columns]="['200px', '150px', '100px', '120px', '80px', '100px', '150px']"
+                [columns]="['200px', '150px', '100px', '120px', '80px', '80px', '150px']"
               ></app-loading-skeleton>
             }
           </div>
@@ -175,12 +170,11 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                   <thead>
                     <tr>
                       <th>Goal</th>
-                      <th>Category</th>
                       <th>Priority</th>
                       <th>Status</th>
-                      <th>Progress</th>
-                      <th>Rating</th>
-                      <th>Target Date</th>
+                      <th>Target</th>
+                      <th>Self Rating</th>
+                      <th>Manager Rating</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -188,13 +182,15 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                     @for (goal of store.items(); track goal.id) {
                       <tr>
                         <td>
-                          <div class="fw-bold">{{ goal.title }}</div>
-                          <small class="text-muted">{{ goal.employeeName || 'N/A' }}</small>
-                        </td>
-                        <td>
-                          <span class="badge bg-info">{{
-                            getGoalCategoryLabel(goal.category)
-                          }}</span>
+                          <div class="fw-bold">{{ goal.goal_title }}</div>
+                          <small class="text-muted">{{ goal.employee_name || 'N/A' }}</small>
+                          @if (goal.kpi_description) {
+                            <br />
+                            <small class="text-muted"
+                              >{{ goal.kpi_description | slice: 0 : 50
+                              }}{{ goal.kpi_description!.length > 50 ? '...' : '' }}</small
+                            >
+                          }
                         </td>
                         <td>
                           <span
@@ -210,7 +206,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                         <td>
                           <span
                             class="badge"
-                            [class.bg-secondary]="goal.status === 'draft'"
+                            [class.bg-secondary]="goal.status === 'pending'"
                             [class.bg-primary]="goal.status === 'in_progress'"
                             [class.bg-success]="goal.status === 'completed'"
                             [class.bg-danger]="goal.status === 'cancelled'"
@@ -218,38 +214,33 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                             {{ getGoalStatusLabel(goal.status) }}
                           </span>
                         </td>
-                        <td style="min-width: 150px;">
-                          <div class="d-flex align-items-center">
-                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
-                              <div
-                                class="progress-bar"
-                                [class.bg-success]="goal.progress >= 80"
-                                [class.bg-warning]="goal.progress >= 50 && goal.progress < 80"
-                                [class.bg-danger]="goal.progress < 50"
-                                [style.width.%]="goal.progress"
-                              ></div>
-                            </div>
-                            <small class="text-muted">{{ goal.progress }}%</small>
-                          </div>
+                        <td>
+                          <span class="small">{{ goal.target_value || '-' }}</span>
                         </td>
                         <td>
-                          @if (goal.finalRating) {
-                            <span class="badge bg-warning">{{
-                              getRatingLabel(goal.finalRating)
-                            }}</span>
-                          } @else if (goal.managerRating) {
-                            <span class="badge bg-info">{{
-                              getRatingLabel(goal.managerRating)
-                            }}</span>
-                          } @else if (goal.selfRating) {
-                            <span class="badge bg-secondary">{{
-                              getRatingLabel(goal.selfRating)
-                            }}</span>
+                          @if (goal.self_rating) {
+                            <span
+                              class="badge"
+                              [class]="getRatingBadgeClass(goal.self_rating!.self_rating)"
+                            >
+                              {{ getRatingLabel(goal.self_rating!.self_rating) }}
+                            </span>
                           } @else {
                             <span class="text-muted">N/A</span>
                           }
                         </td>
-                        <td>{{ goal.targetDate | date: 'dd MMM yyyy' }}</td>
+                        <td>
+                          @if (goal.manager_rating) {
+                            <span
+                              class="badge"
+                              [class]="getRatingBadgeClass(goal.manager_rating!.manager_rating)"
+                            >
+                              {{ getRatingLabel(goal.manager_rating!.manager_rating) }}
+                            </span>
+                          } @else {
+                            <span class="text-muted">N/A</span>
+                          }
+                        </td>
                         <td>
                           <div class="btn-group btn-group-sm">
                             <button
@@ -259,15 +250,6 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
                             >
                               <i class="fas fa-eye"></i>
                             </button>
-                            @if (store.canEdit() && goal.status === 'in_progress') {
-                              <button
-                                class="btn btn-outline-success"
-                                (click)="updateProgress(goal)"
-                                title="Update Progress"
-                              >
-                                <i class="fas fa-chart-line"></i>
-                              </button>
-                            }
                             @if (store.canEdit()) {
                               <button
                                 class="btn btn-outline-secondary"
@@ -307,29 +289,26 @@ export class GoalsListComponent implements OnInit {
   searchTerm = '';
   statusFilter = '';
   priorityFilter = '';
-  categoryFilter = '';
+  cycleFilter = '';
   skeletonRows = Array(5).fill(0);
 
   readonly Permission = Permission;
   readonly getGoalStatusLabel = getGoalStatusLabel;
-  readonly getGoalCategoryLabel = getGoalCategoryLabel;
   readonly getPriorityLabel = getPriorityLabel;
   readonly getRatingLabel = getRatingLabel;
+  readonly getRatingBadgeClass = getRatingBadgeClass;
 
   ngOnInit(): void {
+    this.store.loadCycles();
     this.store.loadGoals();
-    this.store.loadKPIs();
   }
 
   getGoalsCountByStatus(status: string): number {
     return this.store.items().filter((g) => g.status === status).length;
   }
 
-  getAverageProgress(): number {
-    const items = this.store.items();
-    if (items.length === 0) return 0;
-    const total = items.reduce((sum, g) => sum + g.progress, 0);
-    return Math.round(total / items.length);
+  getSelfRatedCount(): number {
+    return this.store.items().filter((g) => g.self_rating !== undefined).length;
   }
 
   onSearch(): void {
@@ -339,8 +318,8 @@ export class GoalsListComponent implements OnInit {
   onFilterChange(): void {
     this.store.loadGoals({
       status: this.statusFilter as GoalStatus,
-      priority: this.priorityFilter as Goal['priority'],
-      category: this.categoryFilter as Goal['category'],
+      priority: this.priorityFilter as GoalPriority,
+      cycle_id: this.cycleFilter ? Number(this.cycleFilter) : undefined,
       page: 1,
     });
   }
@@ -353,12 +332,12 @@ export class GoalsListComponent implements OnInit {
     this.router.navigate(['/performance/goals/create']);
   }
 
-  navigateToKPIs(): void {
-    this.router.navigate(['/performance/kpis']);
+  navigateToCycles(): void {
+    this.router.navigate(['/performance/cycles']);
   }
 
-  navigateToAppraisals(): void {
-    this.router.navigate(['/performance/appraisals']);
+  navigateToRatings(): void {
+    this.router.navigate(['/performance/ratings']);
   }
 
   viewGoal(goal: Goal): void {
@@ -369,18 +348,8 @@ export class GoalsListComponent implements OnInit {
     this.router.navigate(['/performance/goals/edit', goal.id]);
   }
 
-  updateProgress(goal: Goal): void {
-    const progress = prompt('Enter progress percentage (0-100):', goal.progress.toString());
-    if (progress !== null) {
-      const progressNum = parseInt(progress, 10);
-      if (!isNaN(progressNum) && progressNum >= 0 && progressNum <= 100) {
-        this.store.updateProgress(goal.id, progressNum).subscribe();
-      }
-    }
-  }
-
   deleteGoal(goal: Goal): void {
-    if (confirm(`Delete goal "${goal.title}"?`)) {
+    if (confirm(`Delete goal "${goal.goal_title}"?`)) {
       this.store.deleteGoal(goal.id).subscribe();
     }
   }

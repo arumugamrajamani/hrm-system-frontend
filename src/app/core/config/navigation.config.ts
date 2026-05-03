@@ -68,10 +68,6 @@ export const APP_NAVIGATION_ITEMS: MenuItemConfig[] = [
     permissions: [Permission.READ],
   },
 
-
-
-
-
   {
     label: 'Approvals',
     icon: 'fa-check-double',
@@ -186,21 +182,33 @@ export const APP_NAVIGATION_ITEMS: MenuItemConfig[] = [
     icon: 'fa-chart-line',
     children: [
       {
-        label: 'Goals & KPIs',
+        label: 'Goals',
         icon: 'fa-bullseye',
         route: '/performance/goals',
         permissions: [Permission.READ],
       },
       {
-        label: 'Appraisal Cycles',
-        icon: 'fa-clipboard-check',
-        route: '/performance/appraisals',
+        label: 'Cycles',
+        icon: 'fa-calendar-alt',
+        route: '/performance/cycles',
         permissions: [Permission.READ],
       },
       {
-        label: 'Training & Certifications',
-        icon: 'fa-graduation-cap',
-        route: '/performance/training',
+        label: 'Self Rating',
+        icon: 'fa-user-check',
+        route: '/performance/self-rating',
+        permissions: [Permission.READ],
+      },
+      {
+        label: 'Manager Rating',
+        icon: 'fa-user-tie',
+        route: '/performance/manager-rating',
+        permissions: [Permission.READ],
+      },
+      {
+        label: 'Ratings & Summaries',
+        icon: 'fa-star',
+        route: '/performance/ratings',
         permissions: [Permission.READ],
       },
     ],

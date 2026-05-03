@@ -2,15 +2,21 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Observable, tap, catchError, finalize, of } from 'rxjs';
 import { PerformanceApiService } from './performance-api.service';
 import {
+  PerformanceCycle,
   Goal,
-  GoalStatus,
-  Appraisal,
-  AppraisalStatus,
-  KRA,
-  KPI,
-  TrainingRecord,
-  AppraisalCycle,
-  ReviewData,
+  SelfRating,
+  ManagerRating,
+  OverallRating,
+  AnnualSummary,
+  CreateCycleDto,
+  UpdateCycleDto,
+  UpdateCycleStatusDto,
+  CreateGoalDto,
+  UpdateGoalDto,
+  CreateSelfRatingDto,
+  CreateManagerRatingDto,
+  UpdateOverallRatingDto,
+  CycleStatus,
 } from '../models/performance.model';
 import { RbacService } from '../../../core/services/rbac.service';
 import { Permission } from '../../../core/models/rbac.models';
@@ -21,24 +27,137 @@ export class PerformanceStore extends BaseStore<Goal> {
   private readonly api = inject(PerformanceApiService);
   private readonly rbacService = inject(RbacService);
 
-  private readonly _appraisals = signal<Appraisal[]>([]);
-  private readonly _selectedAppraisal = signal<Appraisal | null>(null);
-  private readonly _cycles = signal<AppraisalCycle[]>([]);
-  private readonly _kras = signal<KRA[]>([]);
-  private readonly _kpis = signal<KPI[]>([]);
-  private readonly _trainingRecords = signal<TrainingRecord[]>([]);
+  private readonly _cycles = signal<PerformanceCycle[]>([]);
+  private readonly _selectedCycle = signal<PerformanceCycle | null>(null);
+  private readonly _selfRatings = signal<SelfRating[]>([]);
+  private readonly _managerRatings = signal<ManagerRating[]>([]);
+  private readonly _overallRatings = signal<OverallRating[]>([]);
+  private readonly _selectedOverallRating = signal<OverallRating | null>(null);
+  private readonly _annualSummaries = signal<AnnualSummary[]>([]);
+  private readonly _selectedAnnualSummary = signal<AnnualSummary | null>(null);
 
-  readonly appraisals = this._appraisals.asReadonly();
-  readonly selectedAppraisal = this._selectedAppraisal.asReadonly();
   readonly cycles = this._cycles.asReadonly();
-  readonly kras = this._kras.asReadonly();
-  readonly kpis = this._kpis.asReadonly();
-  readonly trainingRecords = this._trainingRecords.asReadonly();
+  readonly selectedCycle = this._selectedCycle.asReadonly();
+  readonly selfRatings = this._selfRatings.asReadonly();
+  readonly managerRatings = this._managerRatings.asReadonly();
+  readonly overallRatings = this._overallRatings.asReadonly();
+  readonly selectedOverallRating = this._selectedOverallRating.asReadonly();
+  readonly annualSummaries = this._annualSummaries.asReadonly();
+  readonly selectedAnnualSummary = this._selectedAnnualSummary.asReadonly();
 
   readonly canCreate = computed(() => this.rbacService.hasPermission(Permission.CREATE));
   readonly canEdit = computed(() => this.rbacService.hasPermission(Permission.EDIT));
   readonly canDelete = computed(() => this.rbacService.hasPermission(Permission.DELETE));
   readonly canManage = computed(() => this.rbacService.hasPermission(Permission.MANAGE));
+
+  // Cycles methods
+  loadCycles(params?: Record<string, unknown>): void {
+    this.setLoading(true);
+    this._error.set(null);
+
+    const queryParams = {
+      page: this.page(),
+      limit: this.limit(),
+      ...params,
+    };
+
+    this.api.getCycles(queryParams).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this._cycles.set(response.data || []);
+        } else {
+          this.setError(response.message || 'Failed to load cycles');
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  loadCycleById(id: number): void {
+    this.setLoading(true);
+    this.api.getCycleById(id).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this._selectedCycle.set(response.data);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  createCycle(data: CreateCycleDto): Observable<any> {
+    this.setLoading(true);
+    return this.api.createCycle(data).pipe(
+      tap((response) => {
+        if (response.success && response.data) {
+          this._cycles.update((list) => [...list, response.data as PerformanceCycle]);
+        }
+      }),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  updateCycle(id: number, data: UpdateCycleDto): Observable<any> {
+    this.setLoading(true);
+    return this.api.updateCycle(id, data).pipe(
+      tap((response) => {
+        if (response.success && response.data) {
+          this._cycles.update((list) =>
+            list.map((c) => (c.id === id ? (response.data as PerformanceCycle) : c)),
+          );
+        }
+      }),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  updateCycleStatus(id: number, data: UpdateCycleStatusDto): Observable<any> {
+    this.setLoading(true);
+    return this.api.updateCycleStatus(id, data).pipe(
+      tap((response) => {
+        if (response.success) {
+          this._cycles.update((list) =>
+            list.map((c) => (c.id === id ? { ...c, status: data.status as CycleStatus } : c)),
+          );
+        }
+      }),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  checkCycleStatuses(): Observable<any> {
+    this.setLoading(true);
+    return this.api.checkCycleStatuses().pipe(
+      tap(() => {
+        this.loadCycles();
+      }),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
 
   // Goals methods
   loadGoals(params?: Record<string, unknown>): void {
@@ -69,14 +188,44 @@ export class PerformanceStore extends BaseStore<Goal> {
     });
   }
 
-  createGoal(data: Partial<Goal>): Observable<any> {
+  loadGoalsByCycleAndEmployee(cycleId: number, employeeId: number): void {
+    this.setLoading(true);
+    this.api.getGoalsByCycleAndEmployee(cycleId, employeeId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.setItems(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  loadGoalsWithRatings(cycleId: number, employeeId: number): void {
+    this.setLoading(true);
+    this.api.getGoalsWithRatingsByCycleAndEmployee(cycleId, employeeId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.setItems(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  createGoal(data: CreateGoalDto): Observable<any> {
     this.setLoading(true);
     return this.api.createGoal(data).pipe(
       tap((response) => {
         if (response.success && response.data) {
           this.addItemToList(response.data as Goal);
-        } else {
-          this.setError(response.message || 'Failed to create goal');
         }
       }),
       catchError((err) => {
@@ -87,15 +236,18 @@ export class PerformanceStore extends BaseStore<Goal> {
     );
   }
 
-  updateGoal(id: number, data: Partial<Goal>): Observable<any> {
+  updateGoal(id: number, data: UpdateGoalDto): Observable<any> {
     this.setLoading(true);
     return this.api.updateGoal(id, data).pipe(
       tap((response) => {
-        if (response.success) {
-          this.updateItemInList({ id, ...data } as Goal);
+        if (response.success && response.data) {
+          this.updateItemInList(response.data as Goal);
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
@@ -110,225 +262,268 @@ export class PerformanceStore extends BaseStore<Goal> {
     );
   }
 
-  updateProgress(id: number, progress: number): Observable<any> {
-    return this.api.updateGoalProgress(id, progress).pipe(
-      tap((response) => {
-        if (response.success) {
-          this.updateItemInList({ id, progress } as Goal);
-        }
-      }),
-    );
-  }
-
-  // Appraisals methods
-  loadAppraisals(params?: Record<string, unknown>): void {
+  // Self Ratings methods
+  submitSelfRating(goalId: number, data: CreateSelfRatingDto): Observable<any> {
     this.setLoading(true);
-    this.api.getAppraisals(params || {}).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this._appraisals.set(response.data || []);
-        }
-        this.setLoading(false);
-      },
-      error: () => {
-        this.setLoading(false);
-      },
-    });
-  }
-
-  submitSelfReview(appraisalId: number, reviewData: ReviewData): Observable<any> {
-    this.setLoading(true);
-    return this.api.submitSelfReview(appraisalId, reviewData).pipe(
+    return this.api.submitSelfRating(goalId, data).pipe(
       tap((response) => {
-        if (response.success) {
-          this._appraisals.update((list) =>
-            list.map((a) =>
-              a.id === appraisalId
-                ? { ...a, status: AppraisalStatus.MANAGER_REVIEW, selfReview: reviewData }
-                : a,
+        if (response.success && response.data) {
+          this._selfRatings.update((list) => [...list, response.data as SelfRating]);
+          this._items.update((items) =>
+            items.map((g) =>
+              g.id === goalId ? { ...g, self_rating: response.data as SelfRating } : g,
             ),
           );
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  submitManagerReview(appraisalId: number, reviewData: ReviewData): Observable<any> {
+  submitAllSelfRatings(cycleId: number): Observable<any> {
     this.setLoading(true);
-    return this.api.submitManagerReview(appraisalId, reviewData).pipe(
-      tap((response) => {
+    return this.api.submitAllSelfRatings(cycleId).pipe(
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  loadSelfRatings(cycleId: number, employeeId: number): void {
+    this.setLoading(true);
+    this.api.getSelfRatingsByCycleAndEmployee(cycleId, employeeId).subscribe({
+      next: (response) => {
         if (response.success) {
-          this._appraisals.update((list) =>
-            list.map((a) =>
-              a.id === appraisalId
-                ? { ...a, status: AppraisalStatus.SKIP_LEVEL_REVIEW, managerReview: reviewData }
-                : a,
+          this._selfRatings.set(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  // Manager Ratings methods
+  submitManagerRating(goalId: number, data: CreateManagerRatingDto): Observable<any> {
+    this.setLoading(true);
+    return this.api.submitManagerRating(goalId, data).pipe(
+      tap((response) => {
+        if (response.success && response.data) {
+          this._managerRatings.update((list) => [...list, response.data as ManagerRating]);
+          this._items.update((items) =>
+            items.map((g) =>
+              g.id === goalId ? { ...g, manager_rating: response.data as ManagerRating } : g,
             ),
           );
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  // Cycles methods
-  loadCycles(params?: Record<string, unknown>): void {
+  submitAllManagerRatings(cycleId: number): Observable<any> {
     this.setLoading(true);
-    this.api.getAppraisalCycles(params || {}).subscribe({
+    return this.api.submitAllManagerRatings(cycleId).pipe(
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
+      finalize(() => this.setLoading(false)),
+    );
+  }
+
+  loadManagerRatings(cycleId: number, employeeId: number): void {
+    this.setLoading(true);
+    this.api.getManagerRatingsByCycleAndEmployee(cycleId, employeeId).subscribe({
       next: (response) => {
         if (response.success) {
-          this._cycles.set(response.data || []);
+          this._managerRatings.set(response.data || []);
         }
         this.setLoading(false);
       },
-      error: () => {
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
         this.setLoading(false);
       },
     });
   }
 
-  createCycle(data: Partial<AppraisalCycle>): Observable<any> {
+  // Overall Ratings methods
+  loadOverallRatings(params?: Record<string, unknown>): void {
     this.setLoading(true);
-    return this.api.createAppraisalCycle(data).pipe(
+    this.api.getOverallRatings(params || {}).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this._overallRatings.set(response.data || []);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  loadOverallRatingByCycleAndEmployee(cycleId: number, employeeId: number): void {
+    this.setLoading(true);
+    this.api.getOverallRatingByCycleAndEmployee(cycleId, employeeId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this._selectedOverallRating.set(response.data);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  updateOverallRating(
+    cycleId: number,
+    employeeId: number,
+    data: UpdateOverallRatingDto,
+  ): Observable<any> {
+    this.setLoading(true);
+    return this.api.updateOverallRating(cycleId, employeeId, data).pipe(
       tap((response) => {
         if (response.success && response.data) {
-          this._cycles.update((list) => [...list, response.data as AppraisalCycle]);
-        }
-      }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
-      finalize(() => this.setLoading(false)),
-    );
-  }
-
-  updateCycle(id: number, data: Partial<AppraisalCycle>): Observable<any> {
-    this.setLoading(true);
-    return this.api.updateAppraisalCycle(id, data).pipe(
-      tap((response) => {
-        if (response.success) {
-          this._cycles.update((list) => list.map((c) => (c.id === id ? { ...c, ...data } : c)));
-        }
-      }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
-      finalize(() => this.setLoading(false)),
-    );
-  }
-
-  deleteCycle(id: number): Observable<any> {
-    return this.api.deleteAppraisalCycle(id).pipe(
-      tap((response) => {
-        if (response.success) {
-          this._cycles.update((list) => list.filter((c) => c.id !== id));
-        }
-      }),
-    );
-  }
-
-  activateCycle(id: number): Observable<any> {
-    this.setLoading(true);
-    return this.api.activateCycle(id).pipe(
-      tap((response) => {
-        if (response.success) {
-          this._cycles.update((list) =>
-            list.map((c) => (c.id === id ? { ...c, status: 'active' as const } : c)),
+          this._selectedOverallRating.set(response.data);
+          this._overallRatings.update((list) =>
+            list.map((r) =>
+              r.cycle_id === cycleId && r.employee_id === employeeId
+                ? (response.data as OverallRating)
+                : r,
+            ),
           );
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  lockCycle(id: number): Observable<any> {
+  approveOverallRating(cycleId: number, employeeId: number): Observable<any> {
     this.setLoading(true);
-    return this.api.lockCycle(id).pipe(
+    return this.api.approveOverallRating(cycleId, employeeId).pipe(
       tap((response) => {
         if (response.success) {
-          this._cycles.update((list) =>
-            list.map((c) => (c.id === id ? { ...c, status: 'locked' as const } : c)),
+          this._selectedOverallRating.update((r) => (r ? { ...r, is_approved: true } : null));
+          this._overallRatings.update((list) =>
+            list.map((r) =>
+              r.cycle_id === cycleId && r.employee_id === employeeId
+                ? { ...r, is_approved: true }
+                : r,
+            ),
           );
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  // KRAs methods
-  loadKRAs(params?: Record<string, unknown>): void {
-    this.api.getKRAs(params || {}).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this._kras.set(response.data || []);
-        }
-      },
-    });
-  }
-
-  // KPIs methods
-  loadKPIs(params?: Record<string, unknown>): void {
-    this.api.getKPIs(params || {}).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this._kpis.set(response.data || []);
-        }
-      },
-    });
-  }
-
-  // Training Records methods
-  loadTrainingRecords(params?: Record<string, unknown>): void {
+  // Annual Summaries methods
+  loadAnnualSummaries(params?: Record<string, unknown>): void {
     this.setLoading(true);
-    this.api.getTrainingRecords(params || {}).subscribe({
+    this.api.getAnnualSummaries(params || {}).subscribe({
       next: (response) => {
         if (response.success) {
-          this._trainingRecords.set(response.data || []);
+          this._annualSummaries.set(response.data || []);
         }
         this.setLoading(false);
       },
-      error: () => {
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
         this.setLoading(false);
       },
     });
   }
 
-  createTrainingRecord(data: Partial<TrainingRecord>): Observable<any> {
+  loadAnnualSummary(fiscalYear: number, employeeId: number): void {
     this.setLoading(true);
-    return this.api.createTrainingRecord(data).pipe(
+    this.api.getAnnualSummaryByYearAndEmployee(fiscalYear, employeeId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this._selectedAnnualSummary.set(response.data);
+        }
+        this.setLoading(false);
+      },
+      error: (err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        this.setLoading(false);
+      },
+    });
+  }
+
+  generateAnnualSummary(fiscalYear: number, employeeId: number): Observable<any> {
+    this.setLoading(true);
+    return this.api.generateAnnualSummary(fiscalYear, employeeId).pipe(
       tap((response) => {
         if (response.success && response.data) {
-          this._trainingRecords.update((list) => [...list, response.data as TrainingRecord]);
+          this._annualSummaries.update((list) => [...list, response.data as AnnualSummary]);
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  updateTrainingRecord(id: number, data: Partial<TrainingRecord>): Observable<any> {
+  approveAnnualSummary(fiscalYear: number, employeeId: number): Observable<any> {
     this.setLoading(true);
-    return this.api.updateTrainingRecord(id, data).pipe(
+    return this.api.approveAnnualSummary(fiscalYear, employeeId).pipe(
       tap((response) => {
         if (response.success) {
-          this._trainingRecords.update((list) =>
-            list.map((t) => (t.id === id ? { ...t, ...data } : t)),
+          this._selectedAnnualSummary.update((s) => (s ? { ...s, is_approved: true } : null));
+          this._annualSummaries.update((list) =>
+            list.map((s) =>
+              s.fiscal_year === fiscalYear && s.employee_id === employeeId
+                ? { ...s, is_approved: true }
+                : s,
+            ),
           );
         }
       }),
-      catchError((err) => of({ success: false, message: err.error?.message })),
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
+      }),
       finalize(() => this.setLoading(false)),
     );
   }
 
-  deleteTrainingRecord(id: number): Observable<any> {
-    return this.api.deleteTrainingRecord(id).pipe(
-      tap((response) => {
-        if (response.success) {
-          this._trainingRecords.update((list) => list.filter((t) => t.id !== id));
-        }
+  // Admin
+  processNotifications(): Observable<any> {
+    this.setLoading(true);
+    return this.api.processNotifications().pipe(
+      catchError((err) => {
+        this.setError(err.error?.message || 'An error occurred');
+        return of({ success: false, message: err.error?.message });
       }),
+      finalize(() => this.setLoading(false)),
     );
   }
 
@@ -339,11 +534,13 @@ export class PerformanceStore extends BaseStore<Goal> {
 
   override reset(): void {
     super.reset();
-    this._appraisals.set([]);
-    this._selectedAppraisal.set(null);
     this._cycles.set([]);
-    this._kras.set([]);
-    this._kpis.set([]);
-    this._trainingRecords.set([]);
+    this._selectedCycle.set(null);
+    this._selfRatings.set([]);
+    this._managerRatings.set([]);
+    this._overallRatings.set([]);
+    this._selectedOverallRating.set(null);
+    this._annualSummaries.set([]);
+    this._selectedAnnualSummary.set(null);
   }
 }

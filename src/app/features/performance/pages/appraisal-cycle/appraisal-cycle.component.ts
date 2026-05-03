@@ -1,17 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PerformanceStore } from '../../services/performance.store';
-import {
-  AppraisalCycle,
-  Appraisal,
-  AppraisalStatus,
-  RatingScale,
-  ReviewData,
-  getAppraisalStatusLabel,
-  getRatingLabel,
-} from '../../models/performance.model';
+import { PerformanceCycle, CycleStatus, getCycleStatusLabel } from '../../models/performance.model';
 import { Permission } from '../../../../core/models/rbac.models';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -24,8 +16,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
       <div class="row mb-4">
         <div class="col">
           <h2 class="page-title">
-            <i class="fas fa-clipboard-check me-2"></i>
-            Appraisal Cycles
+            <i class="fas fa-calendar-alt me-2"></i>
+            Performance Cycles
           </h2>
         </div>
         <div class="col-auto">
@@ -34,15 +26,21 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
               <i class="fas fa-bullseye me-1"></i>
               Goals
             </button>
-            <button class="btn btn-outline-secondary" (click)="navigateToTraining()">
-              <i class="fas fa-graduation-cap me-1"></i>
-              Training
+            <button class="btn btn-outline-secondary" (click)="navigateToRatings()">
+              <i class="fas fa-star me-1"></i>
+              Ratings
             </button>
           </div>
           @if (store.canManage()) {
             <button class="btn btn-primary" (click)="createCycle()">
               <i class="fas fa-plus me-2"></i>
               New Cycle
+            </button>
+          }
+          @if (store.canManage()) {
+            <button class="btn btn-outline-dark ms-2" (click)="checkStatuses()">
+              <i class="fas fa-sync me-1"></i>
+              Check Statuses
             </button>
           }
         </div>
@@ -54,7 +52,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
             @for (row of skeletonRows; track $index) {
               <app-loading-skeleton
                 type="table-row"
-                [columns]="['200px', '150px', '120px', '100px', '100px', '100px']"
+                [columns]="['200px', '150px', '120px', '100px', '150px', '100px']"
               ></app-loading-skeleton>
             }
           </div>
@@ -66,197 +64,119 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
           <button class="btn btn-sm btn-outline-danger ms-3" (click)="reload()">Retry</button>
         </div>
       } @else {
-        <!-- Cycles List -->
-        @for (cycle of store.cycles(); track cycle.id) {
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-              <div>
-                <h5 class="mb-0">{{ cycle.name }}</h5>
-                <small class="text-muted">
-                  {{ cycle.period.from | date: 'dd MMM yyyy' }} -
-                  {{ cycle.period.to | date: 'dd MMM yyyy' }}
-                </small>
-              </div>
-              <div>
-                <span
-                  class="badge me-2"
-                  [class.bg-secondary]="cycle.status === 'draft'"
-                  [class.bg-success]="cycle.status === 'active'"
-                  [class.bg-warning]="cycle.status === 'completed'"
-                  [class.bg-danger]="cycle.status === 'locked'"
-                >
-                  {{ cycle.status | titlecase }}
-                </span>
-                @if (store.canManage() && cycle.status === 'draft') {
-                  <button class="btn btn-sm btn-success" (click)="activateCycle(cycle)">
-                    <i class="fas fa-play me-1"></i> Activate
-                  </button>
-                }
-                @if (store.canManage() && cycle.status === 'active') {
-                  <button class="btn btn-sm btn-warning" (click)="lockCycle(cycle)">
-                    <i class="fas fa-lock me-1"></i> Lock
-                  </button>
-                }
-              </div>
-            </div>
-            <div class="card-body">
-              <!-- Progress Bar -->
-              <div class="mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                  <small>Progress</small>
-                  <small>{{ cycle.completedReviews }}/{{ cycle.totalEmployees }} reviews</small>
-                </div>
-                <div class="progress" style="height: 10px;">
-                  <div
-                    class="progress-bar bg-success"
-                    [style.width.%]="getProgressPercentage(cycle)"
-                  ></div>
-                </div>
-              </div>
-
-              <!-- Timeline -->
-              <div class="row mb-3">
-                <div class="col-md-3">
-                  <small class="text-muted">Self Review</small>
-                  <div class="small">
-                    {{ cycle.selfReviewStart | date: 'dd MMM' }} -
-                    {{ cycle.selfReviewEnd | date: 'dd MMM yyyy' }}
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <small class="text-muted">Manager Review</small>
-                  <div class="small">
-                    {{ cycle.managerReviewStart | date: 'dd MMM' }} -
-                    {{ cycle.managerReviewEnd | date: 'dd MMM yyyy' }}
-                  </div>
-                </div>
-                @if (cycle.calibrationStart) {
-                  <div class="col-md-3">
-                    <small class="text-muted">Calibration</small>
-                    <div class="small">
-                      {{ cycle.calibrationStart | date: 'dd MMM' }} -
-                      {{ cycle.calibrationEnd | date: 'dd MMM yyyy' }}
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- Appraisals List -->
-              <h6 class="mb-3">Appraisals</h6>
-              @if (getCycleAppraisals(cycle.id).length === 0) {
-                <app-empty-state
-                  icon="clipboard_list"
-                  title="No Appraisals"
-                  message="No appraisals found for this cycle."
-                ></app-empty-state>
-              } @else {
-                <div class="table-responsive">
-                  <table class="table table-sm table-hover">
-                    <thead>
-                      <tr>
-                        <th>Employee</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Self Rating</th>
-                        <th>Manager Rating</th>
-                        <th>Final Rating</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (appraisal of getCycleAppraisals(cycle.id); track appraisal.id) {
-                        <tr>
-                          <td>
-                            <div class="fw-bold">{{ appraisal.employeeName || 'N/A' }}</div>
-                            <small class="text-muted">{{ appraisal.designationName }}</small>
-                          </td>
-                          <td>{{ appraisal.departmentName || 'N/A' }}</td>
-                          <td>
-                            <span
-                              class="badge"
-                              [class.bg-secondary]="appraisal.status === 'draft'"
-                              [class.bg-info]="appraisal.status === 'self_review'"
-                              [class.bg-primary]="appraisal.status === 'manager_review'"
-                              [class.bg-warning]="appraisal.status === 'skip_level_review'"
-                              [class.bg-success]="appraisal.status === 'completed'"
-                              [class.bg-danger]="appraisal.status === 'locked'"
-                            >
-                              {{ getAppraisalStatusLabel(appraisal.status) }}
-                            </span>
-                          </td>
-                          <td>
-                            @if (appraisal.selfReview?.overallRating) {
-                              <span class="badge bg-secondary">
-                                {{ getRatingLabel(appraisal.selfReview!.overallRating!) }}
-                              </span>
-                            } @else {
-                              <span class="text-muted">-</span>
-                            }
-                          </td>
-                          <td>
-                            @if (appraisal.managerReview?.overallRating) {
-                              <span class="badge bg-info">
-                                {{ getRatingLabel(appraisal.managerReview!.overallRating!) }}
-                              </span>
-                            } @else {
-                              <span class="text-muted">-</span>
-                            }
-                          </td>
-                          <td>
-                            @if (appraisal.finalRating) {
-                              <span class="badge bg-warning">
-                                {{ getRatingLabel(appraisal.finalRating) }}
-                              </span>
-                            } @else {
-                              <span class="text-muted">-</span>
-                            }
-                          </td>
-                          <td>
-                            <div class="btn-group btn-group-sm">
-                              <button
-                                class="btn btn-outline-primary"
-                                (click)="viewAppraisal(appraisal)"
-                                title="View"
-                              >
-                                <i class="fas fa-eye"></i>
-                              </button>
-                              @if (appraisal.status === 'self_review') {
-                                <button
-                                  class="btn btn-outline-success"
-                                  (click)="submitSelfReview(appraisal)"
-                                  title="Submit Self Review"
-                                >
-                                  <i class="fas fa-user-check"></i>
-                                </button>
-                              }
-                              @if (appraisal.status === 'manager_review' && store.canEdit()) {
-                                <button
-                                  class="btn btn-outline-info"
-                                  (click)="submitManagerReview(appraisal)"
-                                  title="Submit Manager Review"
-                                >
-                                  <i class="fas fa-user-tie"></i>
-                                </button>
-                              }
-                            </div>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-            </div>
-          </div>
-        } @empty {
+        @if (store.cycles().length === 0) {
           <app-empty-state
             icon="event_note"
-            title="No Appraisal Cycles"
-            message="There are no appraisal cycles created yet."
+            title="No Performance Cycles"
+            message="There are no performance cycles created yet."
             actionLabel="Create Cycle"
             actionIcon="add"
             (action)="createCycle()"
           ></app-empty-state>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Cycle Name</th>
+                  <th>Code</th>
+                  <th>Type</th>
+                  <th>Fiscal Year</th>
+                  <th>Period</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cycle of store.cycles(); track cycle.id) {
+                  <tr>
+                    <td>
+                      <div class="fw-bold">{{ cycle.cycle_name }}</div>
+                      <small class="text-muted">
+                        Self Rating: {{ cycle.self_rating_start | date: 'dd MMM' }} -
+                        {{ cycle.self_rating_end | date: 'dd MMM yyyy' }}
+                      </small>
+                    </td>
+                    <td>
+                      <code>{{ cycle.cycle_code }}</code>
+                    </td>
+                    <td>
+                      <span class="badge bg-info">{{ cycle.cycle_type | titlecase }}</span>
+                    </td>
+                    <td>
+                      {{ cycle.fiscal_year }}
+                      @if (cycle.quarter) {
+                        <span class="badge bg-secondary ms-1">Q{{ cycle.quarter }}</span>
+                      }
+                    </td>
+                    <td>
+                      <small>
+                        {{ cycle.start_date | date: 'dd MMM yyyy' }} -
+                        {{ cycle.end_date | date: 'dd MMM yyyy' }}
+                      </small>
+                    </td>
+                    <td>
+                      <span
+                        class="badge"
+                        [class.bg-secondary]="cycle.status === 'draft'"
+                        [class.bg-success]="
+                          cycle.status === 'active' ||
+                          cycle.status === 'self_rating_open' ||
+                          cycle.status === 'manager_rating_open'
+                        "
+                        [class.bg-warning]="
+                          cycle.status === 'self_rating_closed' ||
+                          cycle.status === 'manager_rating_closed' ||
+                          cycle.status === 'hr_review'
+                        "
+                        [class.bg-dark]="cycle.status === 'completed'"
+                      >
+                        {{ getCycleStatusLabel(cycle.status) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button
+                          class="btn btn-outline-primary"
+                          (click)="viewCycle(cycle)"
+                          title="View"
+                        >
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        @if (store.canManage() && cycle.status === 'draft') {
+                          <button
+                            class="btn btn-outline-success"
+                            (click)="activateCycle(cycle)"
+                            title="Activate"
+                          >
+                            <i class="fas fa-play"></i>
+                          </button>
+                        }
+                        @if (store.canEdit()) {
+                          <button
+                            class="btn btn-outline-secondary"
+                            (click)="editCycle(cycle)"
+                            title="Edit"
+                          >
+                            <i class="fas fa-edit"></i>
+                          </button>
+                        }
+                        @if (store.canManage()) {
+                          <button
+                            class="btn btn-outline-dark"
+                            (click)="updateCycleStatus(cycle)"
+                            title="Update Status"
+                          >
+                            <i class="fas fa-exchange-alt"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       }
     </div>
@@ -266,87 +186,59 @@ export class AppraisalCycleComponent implements OnInit {
   readonly store = inject(PerformanceStore);
   private router = inject(Router);
 
-  skeletonRows = Array(3).fill(0);
+  skeletonRows = Array(5).fill(0);
 
   readonly Permission = Permission;
-  readonly getAppraisalStatusLabel = getAppraisalStatusLabel;
-  readonly getRatingLabel = getRatingLabel;
-  readonly AppraisalStatus = AppraisalStatus;
+  readonly getCycleStatusLabel = getCycleStatusLabel;
+  readonly CycleStatus = CycleStatus;
 
   ngOnInit(): void {
     this.store.loadCycles();
-    this.store.loadAppraisals();
-  }
-
-  getProgressPercentage(cycle: AppraisalCycle): number {
-    if (cycle.totalEmployees === 0) return 0;
-    return Math.round((cycle.completedReviews / cycle.totalEmployees) * 100);
-  }
-
-  getCycleAppraisals(cycleId: number): Appraisal[] {
-    return this.store.appraisals().filter((a) => a.cycleId === cycleId);
   }
 
   reload(): void {
     this.store.loadCycles();
-    this.store.loadAppraisals();
   }
 
   navigateToGoals(): void {
     this.router.navigate(['/performance/goals']);
   }
 
-  navigateToTraining(): void {
-    this.router.navigate(['/performance/training']);
+  navigateToRatings(): void {
+    this.router.navigate(['/performance/ratings']);
   }
 
   createCycle(): void {
     this.router.navigate(['/performance/cycles/create']);
   }
 
-  activateCycle(cycle: AppraisalCycle): void {
-    if (confirm(`Activate appraisal cycle "${cycle.name}"?`)) {
-      this.store.activateCycle(cycle.id).subscribe();
+  viewCycle(cycle: PerformanceCycle): void {
+    this.router.navigate(['/performance/cycles', cycle.id]);
+  }
+
+  editCycle(cycle: PerformanceCycle): void {
+    this.router.navigate(['/performance/cycles/edit', cycle.id]);
+  }
+
+  activateCycle(cycle: PerformanceCycle): void {
+    if (confirm(`Activate performance cycle "${cycle.cycle_name}"?`)) {
+      this.store.updateCycleStatus(cycle.id, { status: CycleStatus.ACTIVE }).subscribe();
     }
   }
 
-  lockCycle(cycle: AppraisalCycle): void {
-    if (confirm(`Lock appraisal cycle "${cycle.name}"? This action cannot be undone.`)) {
-      this.store.lockCycle(cycle.id).subscribe();
+  updateCycleStatus(cycle: PerformanceCycle): void {
+    const status = prompt(
+      `Enter new status for "${cycle.cycle_name}":\n(draft, active, self_rating_open, self_rating_closed, manager_rating_open, manager_rating_closed, hr_review, completed)`,
+      cycle.status,
+    );
+    if (status) {
+      this.store.updateCycleStatus(cycle.id, { status: status as CycleStatus }).subscribe();
     }
   }
 
-  viewAppraisal(appraisal: Appraisal): void {
-    this.router.navigate(['/performance/appraisals', appraisal.id]);
-  }
-
-  submitSelfReview(appraisal: Appraisal): void {
-    const rating = prompt('Enter your overall rating (1-5):');
-    if (rating) {
-      const ratingNum = parseInt(rating, 10) as RatingScale;
-      if (ratingNum >= 1 && ratingNum <= 5) {
-        const reviewData: ReviewData = {
-          overallRating: ratingNum,
-          goalsReview: [],
-          kraReview: [],
-        };
-        this.store.submitSelfReview(appraisal.id, reviewData).subscribe();
-      }
-    }
-  }
-
-  submitManagerReview(appraisal: Appraisal): void {
-    const rating = prompt('Enter manager rating (1-5):');
-    if (rating) {
-      const ratingNum = parseInt(rating, 10) as RatingScale;
-      if (ratingNum >= 1 && ratingNum <= 5) {
-        const reviewData: ReviewData = {
-          overallRating: ratingNum,
-          goalsReview: [],
-          kraReview: [],
-        };
-        this.store.submitManagerReview(appraisal.id, reviewData).subscribe();
-      }
+  checkStatuses(): void {
+    if (confirm('Check and update all cycle statuses?')) {
+      this.store.checkCycleStatuses().subscribe();
     }
   }
 }
